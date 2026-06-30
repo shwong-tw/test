@@ -44,6 +44,26 @@ def extract_columns_from_pdf(pdf_path, start_page=7, end_page=90):
     return "\n".join(all_text)
 
 
+def _ends_with_location(text):
+    """Check if text ends with a location pattern (City, STATE or City, Country).
+
+    Used to detect the end of an award lecture entry.
+    Examples: "..., Cambridge, MA", "..., Houston, TX", "..., Hong Kong, SAR"
+    """
+    # US state (2 uppercase letters) at end
+    if re.search(r",\s+[A-Z]{2}\s*$", text):
+        return True
+    # Country/region name at end (e.g., "Netherlands", "Republic of Korea", "SAR")
+    if re.search(
+        r",\s+[A-Z][a-zA-Z]+(?:\s+(?:of\s+)?[A-Z][a-zA-Z]+)*\s*$", text
+    ):
+        return True
+    # Semicolon-separated multiple speakers ending with location
+    if re.search(r";\s+.+,\s+[A-Z]{2}\s*$", text):
+        return True
+    return False
+
+
 def parse_program(text, track_untaken=False):
     """Parse the program text into structured records.
 
@@ -235,6 +255,7 @@ def parse_program(text, track_untaken=False):
             or line.startswith("Panelists:")
             or line.startswith("Moderator:")
             or line.startswith("Moderators:")
+            or line.startswith("Funder Remarks:")
             or line.startswith("Section ")
         ):
             # Skip multi-line Chair/Cochair/Panelist blocks
@@ -252,6 +273,7 @@ def parse_program(text, track_untaken=False):
                     or next_line.startswith("NOT ELIGIBLE")
                     or next_line.startswith("Chair:")
                     or next_line.startswith("Cochairs:")
+                    or next_line.startswith("Funder Remarks:")
                 ):
                     break
                 # Continuation of names/locations list (contains commas with state codes
@@ -275,6 +297,100 @@ def parse_program(text, track_untaken=False):
                     i += 1
                     continue
                 break
+            # After skipping Chair/Funder lines in an Awards session, check for
+            # untimed talk entries (award lectures have no time prefix)
+            if current_session_type == "Awards and Lectures":
+                while i < len(lines):
+                    next_line = lines[i].strip()
+                    if not next_line:
+                        break
+                    # Stop if we hit structural elements
+                    if (
+                        time_entry_pattern.match(next_line)
+                        or date_pattern.match(next_line)
+                        or room_pattern.match(next_line)
+                        or time_range_pattern.match(next_line)
+                        or next_line.startswith("NOT ELIGIBLE")
+                        or next_line.startswith("Chair:")
+                        or next_line.startswith("Cochairs:")
+                        or next_line.startswith("Funder Remarks:")
+                    ):
+                        break
+                    # Check if this is a session type header
+                    temp_clean = re.sub(
+                        r"\s*\(cont['\u2019]d\)", "", next_line.rstrip(" |").strip()
+                    )
+                    is_session_type = any(
+                        temp_clean == s or temp_clean.startswith(s)
+                        for s in session_type_keywords
+                    )
+                    if is_session_type:
+                        break
+                    # Collect lines that form an untimed talk entry
+                    # These look like: "Talk title. Speaker Name, City, State"
+                    # possibly spanning multiple lines, ending with a location pattern
+                    talk_content_lines = [next_line]
+                    talk_indices = [i]
+                    i += 1
+                    # Check if current accumulated text already ends with location
+                    accumulated = next_line
+                    if not _ends_with_location(accumulated):
+                        while i < len(lines):
+                            cont_line = lines[i].strip()
+                            if not cont_line:
+                                break
+                            if (
+                                time_entry_pattern.match(cont_line)
+                                or date_pattern.match(cont_line)
+                                or room_pattern.match(cont_line)
+                                or time_range_pattern.match(cont_line)
+                                or cont_line.startswith("NOT ELIGIBLE")
+                                or cont_line.startswith("Chair:")
+                                or cont_line.startswith("Cochairs:")
+                                or cont_line.startswith("Funder Remarks:")
+                            ):
+                                break
+                            temp_clean2 = re.sub(
+                                r"\s*\(cont['\u2019]d\)", "", cont_line.rstrip(" |").strip()
+                            )
+                            is_stype2 = any(
+                                temp_clean2 == s or temp_clean2.startswith(s)
+                                for s in session_type_keywords
+                            )
+                            if is_stype2:
+                                break
+                            talk_content_lines.append(cont_line)
+                            talk_indices.append(i)
+                            i += 1
+                            # Stop collecting once we have a location ending
+                            accumulated = " ".join(talk_content_lines)
+                            if _ends_with_location(accumulated):
+                                break
+
+                    talk_content = " ".join(talk_content_lines)
+                    talk_content = re.sub(r"\s+", " ", talk_content).strip()
+
+                    # Try to parse as a talk (must have ". " indicating title/speaker split)
+                    if ". " in talk_content:
+                        talk_title, speaker = parse_talk_and_speaker(talk_content)
+                        if talk_title and current_date:
+                            records.append(
+                                {
+                                    "Date": current_date,
+                                    "Time": "",
+                                    "Session Type": current_session_type,
+                                    "Session Title": current_session_title,
+                                    "Talk Title": talk_title,
+                                    "Speaker": speaker,
+                                }
+                            )
+                            for idx in talk_indices:
+                                taken_lines.add(idx)
+                        else:
+                            break
+                    else:
+                        # Not a talk entry, stop looking
+                        break
             continue
 
         # Check for a talk entry (time + content)
