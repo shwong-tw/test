@@ -15,6 +15,7 @@ Requirements:
 """
 
 import re
+import sys
 import pdfplumber
 import pandas as pd
 
@@ -43,10 +44,23 @@ def extract_columns_from_pdf(pdf_path, start_page=7, end_page=90):
     return "\n".join(all_text)
 
 
-def parse_program(text):
-    """Parse the program text into structured records."""
+def parse_program(text, track_untaken=False):
+    """Parse the program text into structured records.
+
+    Args:
+        text: The full extracted text from the PDF.
+        track_untaken: If True, also return lines that were not captured into records.
+
+    Returns:
+        If track_untaken is False: list of record dicts.
+        If track_untaken is True: (list of record dicts, list of untaken line dicts).
+    """
     records = []
     lines = text.split("\n")
+    # Track which lines are taken (used in a record) vs untaken
+    taken_lines = set()  # indices of lines incorporated into output records
+    skipped_lines = set()  # indices of lines intentionally skipped (headers, chairs, etc.)
+    contextual_lines = set()  # indices used as context (room, session title) but not in talk records
 
     # Patterns
     date_pattern = re.compile(
@@ -112,9 +126,11 @@ def parse_program(text):
 
         # Skip empty lines, page numbers, and single-char artifacts
         if not line or re.match(r"^\d+\s*$", line) or re.match(r"^\d+\s+AACR", line):
+            skipped_lines.add(i)
             i += 1
             continue
         if len(line) <= 2 and not re.match(r"\d", line):
+            skipped_lines.add(i)
             i += 1
             continue
 
@@ -127,6 +143,7 @@ def parse_program(text):
                 current_date = parts[0].capitalize() + ", " + parts[1].title()
             else:
                 current_date = raw_date.title()
+            contextual_lines.add(i)
             i += 1
             continue
 
@@ -141,16 +158,19 @@ def parse_program(text):
                 found_session_type = True
                 break
         if found_session_type:
+            contextual_lines.add(i)
             i += 1
             continue
 
         # Check for time range (session time block header) - skip
         if time_range_pattern.match(line):
+            skipped_lines.add(i)
             i += 1
             continue
 
         # Check for room info - session title follows
         if room_pattern.match(line):
+            contextual_lines.add(i)
             i += 1
             # Skip room description continuation lines
             while i < len(lines):
@@ -160,15 +180,18 @@ def parse_program(text):
                     or "Convention Center" in next_line
                     or "Hyatt" in next_line
                 ) and not time_entry_pattern.match(next_line):
+                    skipped_lines.add(i)
                     i += 1
                     continue
                 break
 
             # Collect session title lines
             title_lines = []
+            title_line_indices = []
             while i < len(lines):
                 next_line = lines[i].strip()
                 if not next_line:
+                    skipped_lines.add(i)
                     i += 1
                     break
                 if (
@@ -193,11 +216,14 @@ def parse_program(text):
                     break
                 if len(next_line) > 2:
                     title_lines.append(next_line)
+                    title_line_indices.append(i)
                 i += 1
 
             if title_lines:
                 current_session_title = " ".join(title_lines)
                 current_session_title = re.sub(r"\s+", " ", current_session_title).strip()
+                for idx in title_line_indices:
+                    contextual_lines.add(idx)
             continue
 
         # Skip Chair/Cochair/misc lines (but don't let their content bleed into titles)
@@ -212,6 +238,7 @@ def parse_program(text):
             or line.startswith("Section ")
         ):
             # Skip multi-line Chair/Cochair/Panelist blocks
+            skipped_lines.add(i)
             i += 1
             while i < len(lines):
                 next_line = lines[i].strip()
@@ -234,6 +261,7 @@ def parse_program(text):
                 if re.search(r",\s+[A-Z]{2}[;\s]*$", next_line) or re.search(
                     r",\s+[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\s*$", next_line
                 ):
+                    skipped_lines.add(i)
                     i += 1
                     continue
                 # Also skip lines that look like continuation of name lists
@@ -243,6 +271,7 @@ def parse_program(text):
                     or re.search(r",\s+[A-Z]{2}", next_line)
                     or re.search(r",\s+[A-Z][a-z]", next_line)
                 ):
+                    skipped_lines.add(i)
                     i += 1
                     continue
                 break
@@ -253,6 +282,7 @@ def parse_program(text):
         if time_match:
             talk_time = time_match.group(1)
             talk_content = time_match.group(2)
+            talk_line_indices = [i]
 
             # Collect continuation lines
             i += 1
@@ -284,9 +314,11 @@ def parse_program(text):
                 if is_session_type:
                     break
                 if len(next_line) <= 2 and not re.match(r"\d", next_line):
+                    skipped_lines.add(i)
                     i += 1
                     continue
                 talk_content += " " + next_line
+                talk_line_indices.append(i)
                 i += 1
 
             # Clean talk content
@@ -306,6 +338,8 @@ def parse_program(text):
                         "Speaker": speaker,
                     }
                 )
+                for idx in talk_line_indices:
+                    taken_lines.add(idx)
             continue
 
         # Check if line might be a session title (standalone, followed by Chair: or time)
@@ -342,7 +376,18 @@ def parse_program(text):
 
         i += 1
 
-    return records
+    if not track_untaken:
+        return records
+
+    # Build untaken text report
+    all_classified = taken_lines | skipped_lines | contextual_lines
+    untaken = []
+    for idx, raw_line in enumerate(lines):
+        stripped = raw_line.strip()
+        if idx not in all_classified and stripped:
+            untaken.append({"line_number": idx + 1, "text": stripped})
+
+    return records, untaken
 
 
 def parse_talk_and_speaker(content):
@@ -442,12 +487,16 @@ def clean_talk_title(title):
 def main():
     pdf_path = "AACR2026_Program_Guide.pdf"
     output_path = "AACR2026_Program_Schedule.xlsx"
+    show_untaken = "--show-untaken" in sys.argv
 
     print("Extracting text from PDF...")
     text = extract_columns_from_pdf(pdf_path, start_page=7, end_page=90)
 
     print("Parsing program schedule...")
-    records = parse_program(text)
+    if show_untaken:
+        records, untaken = parse_program(text, track_untaken=True)
+    else:
+        records = parse_program(text)
 
     print(f"Found {len(records)} entries")
 
@@ -494,6 +543,38 @@ def main():
         print(f"       Session Title: {row['Session Title']}")
         print(f"       Talk Title: {row['Talk Title']}")
         print(f"       Speaker: {row['Speaker']}")
+
+    # Untaken text report
+    if show_untaken:
+        untaken_path = "untaken_text.txt"
+        total_lines = len(text.split("\n"))
+        non_empty_lines = len([l for l in text.split("\n") if l.strip()])
+
+        print(f"\n--- Untaken Text Report ---")
+        print(f"Total lines in PDF text: {total_lines}")
+        print(f"Non-empty lines: {non_empty_lines}")
+        print(f"Untaken lines (not captured into records or recognized as structure): {len(untaken)}")
+        if non_empty_lines > 0:
+            pct = (len(untaken) / non_empty_lines) * 100
+            print(f"Untaken percentage: {pct:.1f}% of non-empty lines")
+
+        with open(untaken_path, "w", encoding="utf-8") as f:
+            f.write("UNTAKEN TEXT REPORT\n")
+            f.write("=" * 60 + "\n")
+            f.write(f"Total lines: {total_lines}\n")
+            f.write(f"Non-empty lines: {non_empty_lines}\n")
+            f.write(f"Untaken lines: {len(untaken)}\n")
+            if non_empty_lines > 0:
+                f.write(f"Untaken percentage: {pct:.1f}%\n")
+            f.write("=" * 60 + "\n\n")
+            f.write("Each line below was NOT captured into any output record.\n")
+            f.write("Review these to check for missing information.\n\n")
+            f.write("-" * 60 + "\n")
+            for item in untaken:
+                f.write(f"Line {item['line_number']:>5}: {item['text']}\n")
+
+        print(f"\nUntaken text saved to: {untaken_path}")
+        print("Review this file to identify any missing information from the PDF.")
 
 
 if __name__ == "__main__":
