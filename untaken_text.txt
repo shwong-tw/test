@@ -1,0 +1,322 @@
+UNTAKEN TEXT REPORT
+============================================================
+Total lines: 5970
+Non-empty lines: 5970
+Untaken lines: 310
+Untaken percentage: 5.2%
+============================================================
+
+Each line below was NOT captured into any output record.
+Review these to check for missing information.
+
+------------------------------------------------------------
+Line    86: Educat
+Line   152: E ducational Sessions
+Line   226: Educat
+Line   504: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line   697: Building the Cancer Dependency Map. Francisca Vazquez,
+Line   698: Cambridge, MA
+Line   699: Perspectives: Cancer Dependency Map (DepMap) Team Members
+Line   700: E ducational Sessions
+Line  1142: M ethods Workshop
+Line  1178: Opening Ceremony
+Line  1187: ➥
+Line  1190: ➥
+Line  1192: ➥
+Line  1195: ➥
+Line  1197: ➥
+Line  1199: ➥
+Line  1204: Additional seating to the Opening Plenary will be available
+Line  1205: in Room 20 AB and Room 20 CD.
+Line  1225: AACR Publications Booth 3537 - Hall D
+Line  1226: Meet the Editor-in-Chief of Molecular Cancer
+Line  1227: Therapeutics: Daniel K. Nomura, PhD
+Line  1235: The HPV Vaccines Continue to Surprise. Douglas R. Lowy,
+Line  1236: Bethesda, MD; John T. Schiller, Bethesda, MD
+Line  1319: Adva
+Line  1466: Majo
+Line  1581: AACR Central - Sails Pavilion – Convention Center
+Line  1582: AACR-Minorities in Cancer Research Meet and Greet
+Line  1587: AACR Central - Sails Pavilion – Convention Center
+Line  1588: AACR-Women in Cancer Research Meet and Greet
+Line  1592: AACR Publications Booth 3537 - Hall D
+Line  1593: Meet the Editor-in-Chief of Cancer Discovery:
+Line  1594: Luis A. Diaz, MD, FAACR
+Line  1611: Poste
+Line  1612: Immunology
+Line  1618: Experimental and Molecular Therapeutics
+Line  1622: Translational Platforms
+Line  1624: Cancer Therapeutic Response
+Line  1626: Cancer Therapies
+Line  1631: Assay Technologies
+Line  1633: Molecular Therapeutics 1
+Line  1634: Molecular/Cellular Biology and Genetics
+Line  1636: Strategies
+Line  1639: Stress Responses
+Line  1641: for Cancer Therapy
+Line  1643: Response Pathways
+Line  1646: and Genetics 1
+Line  1648: ter Sessions (cont’d)
+Line  1649: Tumor Biology
+Line  1651: Pediatric Cancer
+Line  1653: Tumor Cultures
+Line  1655: Heterogeneity
+Line  1658: Tissue Models
+Line  1662: of Tumor and Circulating Ecosystems
+Line  1664: in Cancer
+Line  1665: Population Sciences
+Line  1671: Communication
+Line  1673: Data and Tools
+Line  1674: Chemistry
+Line  1676: Mechanistic Advances
+Line  1678: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  1680: Poste
+Line  1681: Clinical Research
+Line  1685: Dissemination Biology 1
+Line  1689: Pediatric Cancer
+Line  1693: in Oncology
+Line  1695: Metabolism
+Line  1716: AACR Publications Booth 3537 - Hall D
+Line  1717: Meet the Editor-in-Chief of Cancer Research
+Line  1718: Communications: Elaine R. Mardis, PhD, FAACR
+Line  1735: Immune Checkpoint Blockade in Cancer Immunotherapy:
+Line  1736: Mechanistic insights provide new therapeutic opportunities.
+Line  1737: James P. Allison, Houston, TX
+Line  1743: Cell-free DNA: A window into our health. Dennis Lo, Ma Liu Shui,
+Line  1744: Hong Kong, SAR
+Line  1745: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  1754: Reading vs measuring: The next step for anatomic pathology.
+Line  1755: David L. Rimm, New Haven, CT
+Line  1892: Minis
+Line  1982: Minis
+Line  2070: Minis
+Line  2142: Minis
+Line  2217: Minis
+Line  2284: AACR Publications Booth 3537 - Hall D
+Line  2285: Meet the Editor-in-Chief of Cancer Research:
+Line  2286: Christine A. Iacobuzio-Donahue, MD, PhD
+Line  2287: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  2306: Extracellular vesicles and particles drive the systemic
+Line  2307: complications of cancer. David C. Lyden, New York, NY
+Line  2313: Learning the molecular logic of cancer. Eliezer M. Van Allen,
+Line  2314: Boston, MA
+Line  2335: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  2344: Mentors: Janeen R. Azare, New York, NY; J. Carl Barrett, Boston,
+Line  2345: MA; John M. Carethers, San Diego, CA; John D. Carpten, Duarte,
+Line  2346: CA; Luis Carvajal-Carmona, Davis, CA; Raffaele Colombo,
+Line  2347: Vancouver, BC, Canada; Marcia R. Cruz-Correa, San Juan, PR;
+Line  2348: Johann Sebastian de Bono, London; Laura Fejerman, Davis, CA;
+Line  2349: Susan M. Galbraith, Gaithersburg, MD; Erica L. Jackson, South
+Line  2350: San Francisco, CA; Electron Kebebew, Stanford, CA; Reza Mazhari,
+Line  2351: Cambridge, MD; Ruben A. Mesa, Winston-Salem, NC; Coleman K.
+Line  2352: Obasaju, Indianapolis, IN; Folakemi T. Odedina, Jacksonville, FL;
+Line  2353: Thomas Paul, New York, NY; Elizabeth A. Platz, Baltimore, MD;
+Line  2354: Robert Radinsky, Cambridge, MA; Camille C. R. Ragin, Philadelphia,
+Line  2355: PA; Victoria M. Richon, Watertown, MA; Victoria L. Seewaldt,
+Line  2356: Duarte, CA; Sheila Kumari Singh, London, United Kingdom; Kedar
+Line  2357: S. Vaidya, London, United Kingdom; Arti P. Varanasi, Baltimore, MD;
+Line  2358: Tiffany A. Wallace, Rockville, MD; Robert A. Winn, Richmond, VA;
+Line  2359: Clayton Yates, Baltimore, MD
+Line  2391: Indigo BFCG - Hilton Bayfront Hotel
+Line  2392: Networking Hubs
+Line  2393: CancerCareers.org: Scientific Careers Resource
+Line  2394: Entrepreneurship and Innovation
+Line  2395: Artificial Intelligence, Machine Learning, and Data Science
+Line  2396: Novel Models for Cancer Research
+Line  2397: Early Detection Screening
+Line  2398: Spatial Integration of Multi-omics
+Line  2399: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  2449: Sapphire Ballroom - Hilton Bayfront San Diego
+Line  2450: AACR Annual Reception,
+Line  2451: Featuring The Checkpoints
+Line  2452: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  2483: 41
+Line  2521: Tumor Biology
+Line  2523: The Macroenvironmental Axis
+Line  2527: Alternative Species
+Line  2529: Stem Cell Plasticity
+Line  2533: Trajectories
+Line  2534: Endocrinology
+Line  2536: Population Sciences
+Line  2540: and Methodology
+Line  2541: Prevention / Early Detection / Interception
+Line  2543: Chemistry
+Line  2545: Nucleic Acids
+Line  2548: oster Sessions (cont’d)
+Line  2549: Clinical Research
+Line  2553: the Cancer Journey: From Prevention to Trial Design
+Line  2560: Engagers and Antibody-Drug Conjugates 1
+Line  2568: AACR Publications Booth 3537 - Hall D
+Line  2569: Meet the Editors-in-Chief of Blood Cancer
+Line  2570: Discovery: Ross L. Levine, MD, FAACR, and
+Line  2571: Riccardo Dalla-Favera, MD, FAACR
+Line  2572: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  2619: Experimental Therapies
+Line  2885: AACR Publications Booth 3537 - Hall D
+Line  2886: Meet the Editor-in-Chief of Molecular Cancer
+Line  2887: Research: Massimo Loda, MD
+Line  3187: AACR Publications Booth 3537 - Hall D
+Line  3188: Meet the Editor-in-Chief of Clinical Cancer Research:
+Line  3189: Timothy A. Yap, MBBS, PhD
+Line  3235: 52
+Line  3272: Prevention, Early Detection, and Interception
+Line  3274: and Prevention
+Line  3276: and Interception
+Line  3277: Chemistry
+Line  3279: Science and Health Policy
+Line  3281: Clinical Research
+Line  3285: Dissemination Biology 2
+Line  3303: 53
+Line  3343: Cli
+Line  3428: Min
+Line  3501: Min
+Line  3576: Min
+Line  3616: Germany
+Line  3646: Min
+Line  3715: Min
+Line  3783: Min
+Line  3846: Use of surveillance data to promote cancer prevention and
+Line  3847: control: Examples from American Cancer Society. Ahmedin M.
+Line  3848: Jemal, Atlanta, GA
+Line  3849: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  3853: AACR Publications Booth 3537 - Hall D
+Line  3854: Meet the Editors-in-Chief of Cancer Prevention
+Line  3855: Research: Raymond N. DuBois, MD, PhD, FAACR,
+Line  3856: and Nickolas Papadopoulos, PhD
+Line  3885: 61
+Line  3892: How science turned metastatic melanoma from an untreatable
+Line  3893: cancer to a curable cancer. Antoni Ribas, Los Angeles, CA
+Line  3898: RNA in Cancer: From Mechanism to Medicine. Housheng Hansen
+Line  3899: He, Toronto, ON, Canada
+Line  3924: Clinical applications of caner genomics. Luis A. Diaz Jr.,
+Line  3925: New York, NY
+Line  3932: Toward mechanistic understanding and new therapies for
+Line  3933: childhood cancers. Kimberly Stegmaier, Boston, MA
+Line  3934: Meet-the-Expert Sessions
+Line  3944: 62
+Line  3980: Harbor Ballroom GHI - Manchester Grand Hyatt San Diego
+Line  3981: Navigating a Path to a Successful Career in Cancer
+Line  3982: Research
+Line  3986: Career transitioning: From undergraduate to graduate and
+Line  3987: medical school and other allied health professional schools.
+Line  3988: Gregory Adams, Rockville, MD
+Line  3989: Careers in cancer: Patient advocacy and community. Kimlin
+Line  3990: Ashing, Duarte, CA
+Line  3991: Harnessing the power of AI and pitfalls to avoid. Oliver Bogler,
+Line  3992: New York, NY
+Line  3993: Careers in cancer: Biotechnology. Francesco Caiazza, South San
+Line  3994: Francisco, CA
+Line  3995: Getting the grant: Investigator grants. Carlos A. Casiano, Loma
+Line  3996: Linda, CA
+Line  3997: Career Objectives and Survival Skills: Clinical Fellows. Aimee
+Line  3998: Marie Crago, New York, NY
+Line  3999: The art of effectively communicating your research and
+Line  4000: networking. Sophia Hl George, Miami, FL
+Line  4001: 5How to advance from poster to paper: Challenges of publishing
+Line  4002: in peer-reviewed journals with high impact factor. Chanita
+Line  4003: Hughes-Halbert, Los Angeles, CA
+Line  4004: Careers in cancer: Industry. Melissa R. Junttila, South San
+Line  4005: Francisco, CA
+Line  4006: Career objectives and survival skills: Early-stage investigator
+Line  4007: (Junior faculty level). K. Sean Kimbro, Atlanta, GA
+Line  4008: Effective management, communication, and negotiation skills.
+Line  4009: Christopher I. Li, Seattle, WA
+Line  4010: The importance of sponsorship for women. Mariana C. Stern,
+Line  4011: Los Angeles, CA
+Line  4012: Building effective collaborations: Working effectively in a team.
+Line  4013: Katherine Y. Tossas, Richmond, VA
+Line  4014: Building a mentoring team. Danny R. Welch, Kansas City, KS
+Line  4016: Putting yourself on the map: Strategies to increase your
+Line  4017: visibility and expand the impact of your research. Clayton Yates,
+Line  4018: Baltimore, MD
+Line  4019: How NCI supports cancer researchers in training and in the early
+Line  4020: phase of their independent careers. Nastaran Zahir, Bethesda, MD
+Line  4048: 5:15-6:00 pm
+Line  4053: Probing the epigenome for therapeutic opportunities. Cheryl H.
+Line  4054: Arrowsmith, Toronto, ON, Canada
+Line  4061: Epigenetic mechanisms of cancer progression. Andrew P.
+Line  4062: Feinberg, Baltimore, MD
+Line  4139: 65
+Line  4173: Pos
+Line  4174: Tumor Biology
+Line  4177: Tumor Aggressiveness
+Line  4183: Tumor Microenvironment 1
+Line  4186: Endocrinology
+Line  4188: Therapeutic Targets
+Line  4189: Population Sciences
+Line  4192: Decipher Cancer Disparities
+Line  4193: Prevention, Early Detection, and Interception
+Line  4195: Chemistry
+Line  4198: Clinical Research
+Line  4203: FLASH Radiation Research
+Line  4205: Molecular Genetics
+Line  4207: ster Sessions (cont’d)
+Line  4212: Engagers and Antibody-Drug Conjugates 2
+Line  4246: AACR Publications Booth 3537 - Hall D
+Line  4247: Meet the New Editors-in-Chief of Cancer Immunology
+Line  4248: Research: Elizabeth M. Jaffee, MD, FAACR,
+Line  4249: and Antoni Ribas, MD, PhD, FAACR
+Line  4566: AACR Publications Booth 3537 - Hall D
+Line  4567: Meet the Editor-in-Chief of Cancer Epidemiology,
+Line  4568: Biomarkers & Prevention: Elizabeth A. Platz, ScD, MPH
+Line  4834: 75
+Line  4866: Pos
+Line  4867: Tumor Biology
+Line  4869: Microenvironment
+Line  4874: Evolution
+Line  4878: the Tumor Microenvironment 2
+Line  4880: of Cancer
+Line  4881: Population Sciences
+Line  4883: Infection, and Aging
+Line  4885: Sequencing, Functional Genetics / Family and
+Line  4886: Hereditary Studies
+Line  4891: Risk Stratification
+Line  4892: Science and Health Policy
+Line  4894: Chemistry
+Line  4897: and Drug Discovery
+Line  4899: ster Sessions (cont’d)
+Line  4900: Clinical Research
+Line  4908: Response Modifiers
+Line  5095: Min
+Line  5182: Min
+Line  5271: Min
+Line  5359: Min
+Line  5435: DC subsets: Why so much specialization? Kenneth M. Murphy,
+Line  5436: St. Louis, MO
+Line  5437: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  5478: Chromatin, epigenetics, and developing the next generation of
+Line  5479: talent. Charles W.M. Roberts, Memphis, TN
+Line  5498: Harbor Ballroom DEF - Manchester Grand Hyatt San Diego
+Line  5499: Minorities in Cancer Research Town Hall Meeting
+Line  5501: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  5509: Killing the bad without the good: CART for T-cell malignancies.
+Line  5510: John F. DiPersio, St. Louis, MO
+Line  5511: Meet-the-Expert Sessions
+Line  5525: Daniel S.W. Tan, Singapore, Singapore
+Line  5529: 84
+Line  5568: For
+Line  5611: Advancing understanding of the etiology and progression of
+Line  5612: prostate and other cancers through epidemiology anchored
+Line  5613: collaborative research. Elizabeth A. Platz, Baltimore, MD
+Line  5627: Panelist: Susan M. Galbraith, Gaithersburg, MD; Heike
+Line  5628: Keilhack, Cambridge, MA; Michael Penn, South
+Line  5629: San Francisco, CA
+Line  5634: Harbor Ballroom DEF - Manchester Grand Hyatt San Diego
+Line  5635: Women in Cancer Research Town Hall Meeting
+Line  5637: AACR ANNUAL MEETING 2026 PROGRAM GUIDE
+Line  5673: 86
+Line  5674: 2
+Line  5714: Microenvironment: New Targets and Approaches 2
+Line  5719: Population Sciences
+Line  5722: Pharmacoepidemiology, and Other Topics
+Line  5724: and Preneoplastic and Tumor Markers
+Line  5725: Prevention, Early Detection, and Interception
+Line  5727: Approaches, and Molecular Characterization
+Line  5728: Chemistry
+Line  5730: Mass Spectrometry
+Line  5732: Signaling Networks
+Line  5733: Clinical Research
+Line  5740: Predictive Parameters
+Line  5742: in Pediatric Cancers
+Line  5744: Molecular Approaches
+Line  5748: 2 |
