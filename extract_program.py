@@ -390,7 +390,11 @@ def parse_talk_and_speaker(content):
         for pos in reversed(period_positions):
             # Check if this period is part of a middle initial (single letter before it)
             # Middle initial pattern: " X. " where X is a single uppercase letter
-            if pos >= 2 and content[pos - 1].isupper() and content[pos - 2] in " .":
+            if (
+                pos >= 2
+                and content[pos - 1].isupper()
+                and content[pos - 2] in " ."
+            ):
                 continue
             # Check: text after this ". " up to end should be a valid speaker string
             candidate_speaker = content[pos + 2:].strip()
@@ -413,7 +417,11 @@ def parse_talk_and_speaker(content):
     period_positions = [m.start() for m in re.finditer(r"\.\s", content)]
     for pos in reversed(period_positions):
         # Skip middle initials
-        if pos >= 2 and content[pos - 1].isupper() and content[pos - 2] in " .":
+        if (
+            pos >= 2
+            and content[pos - 1].isupper()
+            and content[pos - 2] in " ."
+        ):
             continue
         remaining = content[pos + 2:].strip()
         if "," in remaining and remaining[0].isupper() and len(remaining) < 100:
