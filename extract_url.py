@@ -3,7 +3,8 @@
 Extract session titles and URLs from saved AACR 2026 planning HTML pages.
 
 Each session card in the HTML is an <a href="/event/aacr2026/planning/...">
-containing the session title in an <h3> (falling back to the banner <img alt>).
+containing the session title in an <h3> (falling back to the banner <img alt>,
+then the small-card title <span>).
 Titles are checked against the "Session Title" column (column 4) of
 AACR2026_Program_Schedule.xlsx, and results are written as a tab-separated
 file with "Session Title" and "URL" columns.
@@ -52,6 +53,10 @@ def extract_sessions(html_path):
         if not title:
             img = a.find("img", alt=True)
             title = clean(img["alt"]) if img else ""
+        if not title:
+            # Small cards (e.g. "bookmarked" sidebar) keep the title in a span.
+            span = a.find(class_=re.compile(r"planning-card-small__Title"))
+            title = clean(span.get_text(" ")) if span else ""
         if title:
             sessions.append((title, a["href"]))
     return sessions
