@@ -63,10 +63,10 @@ async def run(args):
         if args.profile:
             context = await p.firefox.launch_persistent_context(
                 args.profile, headless=args.headless, firefox_user_prefs=FIREFOX_PREFS,
-                viewport={"width": 1600, "height": 1000})
+                viewport={"width": args.size[0], "height": args.size[1]})
         else:
             browser = await p.firefox.launch(headless=args.headless, firefox_user_prefs=FIREFOX_PREFS)
-            context = await browser.new_context(viewport={"width": 1600, "height": 1000})
+            context = await browser.new_context(viewport={"width": args.size[0], "height": args.size[1]})
         page = await context.new_page()
 
         captured = []
@@ -112,7 +112,8 @@ async def run(args):
         stats = await capture_slides(
             page, frame, args.outdir, "test", mode=args.mode, interval=args.interval,
             threshold=args.threshold, speed=args.speed, max_seconds=args.seconds,
-            size=args.size, quality=None if args.quality == "auto" else args.quality)
+            size=args.size, quality=None if args.quality == "auto" else args.quality,
+            verbose=args.verbose)
         size = await frame.evaluate(
             "() => { const v = document.querySelector('video');"
             " return v ? [v.videoWidth, v.videoHeight] : null; }")
@@ -153,6 +154,7 @@ def main():
     parser.add_argument("--captions", action="store_true", help="Also try clicking Transcript and saving the .vtt")
     parser.add_argument("--profile", help="Persistent Firefox profile (for logged-in AACR pages)")
     parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--verbose", action="store_true", help="Print progress every 30 s")
     parser.add_argument("--no-wait", action="store_true", help="Close the browser without waiting for Enter")
     args = parser.parse_args()
     args.url = to_embed_url(args.url)

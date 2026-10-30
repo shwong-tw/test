@@ -350,7 +350,7 @@ async def expand_player(page, frame, size=(1280, 720)):
     `size` and stretch every iframe between the page and the player (AACR page
     -> vimeo.com/event embed -> player.vimeo.com) to the full window.
     """
-    if size:
+    if size and page.viewport_size != {"width": size[0], "height": size[1]}:
         await page.set_viewport_size({"width": size[0], "height": size[1]})
     f = frame
     while f.parent_frame is not None:
@@ -429,7 +429,8 @@ async def save_debug(page, frame, out_dir, prefix):
 
 async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=10.0,
                          threshold=10.0, speed=2.0, sample=0.5, max_seconds=None,
-                         stall_timeout=90, size=(1280, 720), quality="720p", log=print):
+                         stall_timeout=90, size=(1280, 720), quality="720p", verbose=False,
+                         log=print):
     """
     Play the video in `frame` and save screenshots to `out_dir`.
 
@@ -483,7 +484,7 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
 
         if t > last_t + 0.01:
             last_t, last_progress = t, time.monotonic()
-        if time.monotonic() - last_report >= 30:
+        if verbose and time.monotonic() - last_report >= 30:
             wall = time.monotonic() - start_wall
             log(f"  [{prefix}] at {fmt_time(t)} / {fmt_time(duration)}, "
                 f"speed {(t - start_t) / wall if wall else 0:.2f}x, "
@@ -577,7 +578,8 @@ async def process_session(page, row, args):
 
     page.on("response", on_response)
     try:
-        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        if page.url != url:           # the login check may have opened it already
+            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(1500)
         if await is_cloudflare_challenge(page):
             print(f"[{sid}] blocked by a Cloudflare check")
@@ -635,7 +637,7 @@ async def process_session(page, row, args):
             stats = await capture_slides(
                 page, frame, out, sid, mode=args.mode, interval=args.interval,
                 threshold=args.threshold, speed=args.speed, size=args.size,
-                quality=None if args.quality == "auto" else args.quality)
+                quality=None if args.quality == "auto" else args.quality, verbose=args.verbose)
             result["Slides"] = f"{stats['status']}:{stats['saved']}"
             result["Duration"] = fmt_time(stats["duration"])
             print(f"[{sid}] {stats['status']}: {stats['saved']} slides, "
@@ -694,7 +696,7 @@ async def run(args, rows):
     async with async_playwright() as p:
         context = await p.firefox.launch_persistent_context(
             args.profile, headless=args.headless, firefox_user_prefs=FIREFOX_PREFS,
-            viewport={"width": 1600, "height": 1000})
+            viewport={"width": args.size[0], "height": args.size[1]})
         try:
             # Reuse the window Firefox opens at start (instead of leaving it blank).
             first_page = context.pages[0] if context.pages else await context.new_page()
@@ -744,6 +746,8 @@ def main():
     parser.add_argument("--timeout", type=int, default=30, help="Seconds to wait for video/captions")
     parser.add_argument("--overwrite", action="store_true", help="Redo sessions that are already done")
     parser.add_argument("--headless", action="store_true", help="Hide the browser (after you have logged in)")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Print a progress line (video time, speed, resolution) every 30 s")
     parser.add_argument("--dry-run", action="store_true", help="List the sessions that would be processed")
     args = parser.parse_args()
 
