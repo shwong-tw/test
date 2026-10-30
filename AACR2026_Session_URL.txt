@@ -1,30 +1,29 @@
 Session Title	URL
+Next Generation Extracellular Vesicles and Particles as Biomarkers, Targets, and Deliverables	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwMw==
+When Tumors Act Like Viruses: Mechanisms and Therapeutic Frontiers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4MA==
 Foundation Models and Multimodal AI for Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1NA==
+Intratumoral Drug Responses	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwNQ==
+Taste and Smell in Cancer: Undervalued Drivers of Nutrition and Patient Impact	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyOA==
+Pathobiology of Sarcomas and Emerging Technologies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3MQ==
+AI in Cancer Care: Practical Applications Transforming Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3Nw==
+The Dark Side of Cancer Therapies: Therapy-Induced Comorbidities Across the Lifespan	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1OQ==
 Mechanisms of Resistance to Targeted and IO Therapies and Strategies for Overcoming Resistance	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4NQ==
 Implementation Science Approaches to Advancing Equitable Cancer Prevention and Control	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxNw==
-Intratumoral Drug Responses	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwNQ==
-Extracellular Matrix Remodeling in the Tumor Microenvironment and Distant Niches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2NQ==
-AI in Cancer Care: Practical Applications Transforming Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3Nw==
-Using Multiplex Assays of Variant Effects (MAVEs) in Clinical Oncology Practice	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3MQ==
-The Dark Side of Cancer Therapies: Therapy-Induced Comorbidities Across the Lifespan	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1OQ==
-When Tumors Act Like Viruses: Mechanisms and Therapeutic Frontiers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4MA==
-Taste and Smell in Cancer: Undervalued Drivers of Nutrition and Patient Impact	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyOA==
 Clinical Trial Design Workshop: Real World Evidence in Clinical Trial Design	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1MA==
 Decoding Tumor Evolution through the Human Tumor Atlas Network: An Ecological and Evolutionary Perspective	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2MA==
-Next Generation Extracellular Vesicles and Particles as Biomarkers, Targets, and Deliverables	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwMw==
 NK Cell-Based Cancer Immunotherapy: From Biology to the Clinic	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1OQ==
-Pathobiology of Sarcomas and Emerging Technologies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3MQ==
-From Risk Awareness to Informed Action: Advancing Cancer Communication Across Prevention and Genomic Care	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzNQ==
-Mapping Neural-Immune Circuits: Spatial Multi-Omics in the Tumor Microenvironment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwOQ==
-New Insights from TCGA Whole-Genome Sequencing	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Mw==
-Chromosomal Instability in Cancer: From Mechanism to Therapy and Clinical Translation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxNA==
-Hematological Malignancies: Undruggable Targets and New Frontiers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3Ng==
-Comparison of Solid and Liquid Tumors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2OA==
-Cancer Systems Biology, Ecology, and Evolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNQ==
-Mechanotransduction in Tumor Development, Metastasis, and Therapy Resistance	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5MA==
-The AACR Project GENIE® Data Model: A Foundation for Scalable, Structured Data Collection to Support the Precision Oncology Revolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Nw==
-Chemistry to the Clinic Part 1 of 4: The Next Generation of Conjugates. Innovative Chemistry and Beyond—Cytotoxic Payloads in Cancer Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3NQ==
+Using Multiplex Assays of Variant Effects (MAVEs) in Clinical Oncology Practice	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3MQ==
+Extracellular Matrix Remodeling in the Tumor Microenvironment and Distant Niches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2NQ==
 Academic Entrepreneurship: Getting Your Discovery to Patients, Part 1— Liftoff	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxOQ==
+Contextual Challenges in Interpreting Performance of Blood-Based Early Cancer Detection Tests	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Ng==
+The AACR Project GENIE® Data Model: A Foundation for Scalable, Structured Data Collection to Support the Precision Oncology Revolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Nw==
+Chromosomal Instability in Cancer: From Mechanism to Therapy and Clinical Translation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxNA==
+From Risk Awareness to Informed Action: Advancing Cancer Communication Across Prevention and Genomic Care	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzNQ==
+Bayesian and Model-Assisted Designs for Early-Phase Clinical Trials: Simplicity Meets Efficiency	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5Nw==
+Chemistry to the Clinic Part 1 of 4: The Next Generation of Conjugates. Innovative Chemistry and Beyond—Cytotoxic Payloads in Cancer Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3NQ==
+Cancer Systems Biology, Ecology, and Evolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNQ==
+Metastatic Organotropism: Clues from Primary Tumors and Metastatic Niches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5Mg==
+Mechanotransduction in Tumor Development, Metastasis, and Therapy Resistance	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5MA==
 Advances in Pre-Metastatic Niche Biology: From Pre-Clinical Insights to Clinical Opportunities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4NQ==
 CART Therapy: Transforming the Landscape of Adult and Pediatric Blood Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyMA==
 Dose Optimization in Early-Phase Oncology Trials: Implementing the Vision of FDA’s Project Optimus	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3Mw==
@@ -36,13 +35,12 @@ The Impact of Lifestyle, Diet, and the Microbiome on Cancer Onset and Spread	htt
 Unraveling the Role of Extrachromosomal DNA in Cancer Evolution and Therapy Response	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1Mg==
 Academic Entrepreneurship: Getting Your Discovery to Patients, Part 2— Preparing for a Perfect Landing	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzOQ==
 Advancing Patient-Centered Clinical Trials: Bringing Trials to Patients and Patients to Trials	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyMw==
-Bayesian and Model-Assisted Designs for Early-Phase Clinical Trials: Simplicity Meets Efficiency	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5Nw==
 Beyond Sex: The Y Chromosome in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5OA==
 Biology, Mechanisms, and Models of Cachexia	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyNA==
 Chemistry to the Clinic Part 2 of 4: Beyond Inhibition—The Next Frontier in Proximity-Inducing Therapies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1MQ==
 Epistasis and Evolution: How Genetic Interactions Shape Cancer Trajectories	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4OA==
 From Mechanisms to Real-World Evidence: The Emerging Role of GLP-1 Receptor Agonists in Cancer Prevention and Outcomes	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Mg==
-Metastatic Organotropism: Clues from Primary Tumors and Metastatic Niches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5Mg==
+Mapping Neural-Immune Circuits: Spatial Multi-Omics in the Tumor Microenvironment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwOQ==
 Small Patients, Big Problems: Precision Medicine Approaches for Childhood Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwNw==
 Tumor Immunology For Non Immunologists: Back to Basics	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0NQ==
 Updates in Anticancer Immunotherapies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDExMg==
@@ -56,40 +54,47 @@ Cancer Metabolism as a Therapeutic Frontier	https://connect.aacr26.org/event/aac
 Chemistry to the Clinic Part 3 of 4: Novel Modalities, Targets, and Mechanisms in Drugging Oncogenic Pathways	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3Nw==
 Clinical and Molecular Phenotyping of Cancer Cachexia	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4MQ==
 Fibroblast Dynamics: How Heterogeneity Shapes the Tumor Microenvironment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwNQ==
+Hematological Malignancies: Undruggable Targets and New Frontiers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3Ng==
 Multi-modal Platforms for Early Cancer Detection	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Nw==
+New Insights from TCGA Whole-Genome Sequencing	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Mw==
 Where Expedited Pathways, Innovation, Safety, and Patient Access Collide: A KRAS Case Study	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyNQ==
 Chemistry to the Clinic Part 4 of 4: From Transcript to Protein—New Frontiers in Drug Discovery	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxMw==
-Contextual Challenges in Interpreting Performance of Blood-Based Early Cancer Detection Tests	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Ng==
+Comparison of Solid and Liquid Tumors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2OA==
 Continuous Oncology: Wearables, Digital Biomarkers, and the Future of Cancer Interception	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyNw==
 Deep Learning in Digital Pathology: From Morphology to Multimodal Biomarkers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5NA==
 Identification and Management of Reduced Penetrance High-risk Cancer Gene Variants	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Mw==
 Innovations in Translating Social and Structural Determinants of Health Across Population, Community, and Basic Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzMg==
 KRAS Inhibitors: From Discovery to Patient Outcomes	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg2Nw==
-New Drugs on the Horizon: Part 2	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0NA==
-Pezcoller Foundation-AACR International Award for Extraordinary Achievement in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA3NQ==
-Beyond Chromosomes: Mechanisms, Consequences, and Therapeutic Opportunities of Extrachromosomal DNA (ecDNA)	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5OQ==
-New Drugs on the Horizon: Part 1	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4MQ==
-Precision Screening: Opportunities to Enhance the Benefits of Cancer Screening	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4Mg==
-Opening Plenary. Precision, Partnership, Purpose: Advancing Cancer Science to Save Lives Globally	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5Ng==
-Shaping the Future of AI: The Role of Pathology in the Development of Foundational Models	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyMw==
-Human Cancer Models: From Patient-Derived Systems to Clinical Translation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxNA==
-Gastric/Gastroesophageal Cancer Dynamics: Pre-Cancer Evolution, Metastasis, Microenvironment, and Therapeutic Breakthroughs	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4NA==
-Opening Ceremony	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQzODEzNA==
+Macrophages as Therapeutic Gatekeepers: From Biology to Clinical Application	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3OA==
+Manufacturing and Engineering the Next Generation of Immune Effectors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyMA==
+New Technologies in the Metabolism of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwMQ==
+Radiotheranostics: Nuts and Bolts	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5Mw==
+Discovery Science Plenary. The Next Frontier in Minimal Residual Disease: Solid Tumors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzMw==
+Early-Onset Cancers: Interventions, Survivorship, and Novel Treatment Approaches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4Mw==
+NCI Opportunities to Support Early Career Cancer Researchers and Research Specialists	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1Ng==
 Advances in Bladder Cancer Research and Treatment: Pathways to Precision Medicine	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3NA==
+Spatial and Single-Cell Omics at Scale: Technologies for Decoding Cancer Ecosystems	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1OA==
+Opening Ceremony	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQzODEzNA==
+NCI Drug Development Resources and Grant Writing Strategies for New and Early-Stage Investigators	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Ng==
+Mechanisms of Immune Evasion and Immune Dysregulation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0OQ==
+Opening Plenary. Precision, Partnership, Purpose: Advancing Cancer Science to Save Lives Globally	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5Ng==
+Approaches to Drug Development for Rare Malignancies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyNg==
+Modernizing Nonclinical Safety Assessment in Oncology Product Development: Current Progress and Future Directions	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5MQ==
+Human Cancer Models: From Patient-Derived Systems to Clinical Translation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxNA==
+Pezcoller Foundation-AACR International Award for Extraordinary Achievement in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA3NQ==
 Advances in the Use of Geospatial and Neighborhood Data for Cancer Population Sciences Research and Translation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwOA==
 Advances in Understanding Disseminated Tumor Cells: An Emerging Opportunity to Prevent Lethal Breast Cancer?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5NA==
-Approaches to Drug Development for Rare Malignancies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyNg==
-Early-Onset Cancers: Interventions, Survivorship, and Novel Treatment Approaches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4Mw==
+Beyond Chromosomes: Mechanisms, Consequences, and Therapeutic Opportunities of Extrachromosomal DNA (ecDNA)	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5OQ==
 Epigenetics in Hematologic Malignancies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxNQ==
-Mechanisms of Immune Evasion and Immune Dysregulation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0OQ==
-NCI Opportunities to Support Early Career Cancer Researchers and Research Specialists	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1Ng==
+Gastric/Gastroesophageal Cancer Dynamics: Pre-Cancer Evolution, Metastasis, Microenvironment, and Therapeutic Breakthroughs	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4NA==
 Neural-Immune Crosstalk in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2NA==
+New Drugs on the Horizon: Part 1	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4MQ==
 New Frontiers in Precision Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4Nw==
-Spatial and Single-Cell Omics at Scale: Technologies for Decoding Cancer Ecosystems	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1OA==
+Precision Screening: Opportunities to Enhance the Benefits of Cancer Screening	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4Mg==
+Shaping the Future of AI: The Role of Pathology in the Development of Foundational Models	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyMw==
 Synthetic Biology Approaches to Cancer and Immune Cell Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5OQ==
 The Necrotic Tumor Microenvironment as an Instigator of Metastatic Aggression and Immuno-evasion	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzOA==
 Therapy-Induced Mutagenesis in Normal Tissues of Children: A Link to Late Effects?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0OA==
-NCI Drug Development Resources and Grant Writing Strategies for New and Early-Stage Investigators	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0Ng==
 AACR Award for Lifetime Achievement in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyMzgxOA==
 AACR James S. Ewing-Thelma B. Dunn Award for Outstanding Achievement in Pathology in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA4NQ==
 AACR-Irving Weinstein Foundation Distinguished Lectureship	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA4Mw==
@@ -103,6 +108,7 @@ Innovative Targeted and Cellular Therapies for Exploiting Cancer Vulnerabilities
 Integrative Computational Approaches	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA5NQ==
 Liquid Biopsy Frontiers: ctDNA, Fragmentomics, and MRD to Guide Precision Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA1Nw==
 Modifiers of Inflammation and the Tumor Microenvironment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3OQ==
+New Drugs on the Horizon: Part 2	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0NA==
 Nonclinical Models of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzMw==
 Noncoding RNA Regulation of Cancer Hallmarks, Therapeutic Resistance, and Biomarker Discovery	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwMg==
 Population Sciences at the Forefront 1: Risk Factors Influencing Cancer Incidence and Survival	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwMQ==
@@ -110,43 +116,41 @@ Researcher Town Hall: Navigating Policy Challenges and Securing Funding	https://
 Therapeutic Advances in ADCs	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEyNw==
 AACR-Princess Takamatsu Memorial Lectureship	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA5Mg==
 AACR-Waun Ki Hong Award for Outstanding Achievement in Translational and Clinical Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQyNDA5MQ==
-Modernizing Nonclinical Safety Assessment in Oncology Product Development: Current Progress and Future Directions	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5MQ==
 NCI Opportunities in Technology Development for Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA5OQ==
 Presidential Address: Mapping the Molecular Landscape of Head and Neck Cancer to Inform Pan-Tumor Targeting	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4NQ==
-Clonal Hematopoiesis: Aging and Drivers of Blood Cancer and Solid Tumors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwMw==
 Addressing Cancer Mortality in Areas of Persistent Poverty	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Mg==
-Modernizing Clinical Trial Communication: NCI's AI-Enabled Toolkit for Research Protocols and Participant Materials	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzNg==
-Cancer Prevention and Screening: Exploring Policy Solutions	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0OA==
-Decoding Cancer’s Complex Ecosystem: The Pathology of Tumor Microenvironment and Heterogeneity	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2NA==
-AACR Annual Business Meeting of Members	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3OQ==
-AI Revolution in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyOQ==
-Microbiota-Host Interactions in Colorectal Cancer Development and Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Mg==
 AACR-Bayard D. Clarkson Symposium on Plasticity and Cancer Progression: Mechanisms and Consequences	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4Ng==
-The Making of Cancer: From Cellular Events to Systemic Disease—Breakthrough Discoveries from Cancer Grand Challenges	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyNA==
-Advances in Glioblastoma Research and Experimental Therapies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Nw==
 Cancer Cachexia: Tumor Signals, Systemic Impact, and Translational Opportunities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwNA==
+New Drugs on the Horizon: Part 3	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3OA==
+Modernizing Clinical Trial Communication: NCI's AI-Enabled Toolkit for Research Protocols and Participant Materials	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzNg==
+Precision Liver Cancer Care Across the Continuum: From Prevention to Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzMg==
+Next-Generation Radioligand Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4OQ==
+Programmed Cell Death: Mechanisms and Therapeutic Opportunities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2Mg==
+Dharma Master Jiantai Symposium in Biomarkers: Next-Gen Tools for ADCs—Defining Biomarkers of Response through Technological Innovation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Ng==
+Decoding Cancer’s Complex Ecosystem: The Pathology of Tumor Microenvironment and Heterogeneity	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2NA==
+AI Revolution in Cancer Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyOQ==
+Advances in Glioblastoma Research and Experimental Therapies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Nw==
 Cellular Therapies and Complex Immunotherapies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzMg==
+Clonal Hematopoiesis: Aging and Drivers of Blood Cancer and Solid Tumors	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwMw==
 DNA Damage Response and Synthetic Lethality in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1NQ==
 Exploiting Cancer Evolution for Clinical Impact	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4NA==
 From Data Commons to Knowledge Engine: AI Enablement Across CRDC and CCDI	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEyMw==
 Immunometabolism in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwOQ==
-New Drugs on the Horizon: Part 3	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3OA==
-Next-Generation Radioligand Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4OQ==
-Precision Liver Cancer Care Across the Continuum: From Prevention to Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzMg==
 Presidential Select Symposium. Targeting Stage 0: Precision-Based Prevention	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzMQ==
 Reframing Gynecologic Cancer Prevention: From STIC Discovery to Salpingectomy —Translating the Fallopian Tube Paradigm into Ovarian Cancer Prevention	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0NQ==
 Role of the Intestinal Microbiome in CAR T-Cell Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1Ng==
 Single Cell Multi-omic Technologies for Resolving Genotype-Phenotype Relationships in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2NQ==
 Strengthening the Oncology Trial Ecosystem Through Operational and Regulatory Innovation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4Mw==
+AACR Annual Business Meeting of Members	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3OQ==
+Cancer Prevention and Screening: Exploring Policy Solutions	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0OA==
 Cancer Vaccines: The Next Immunotherapy Breakthrough?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3MA==
-Dharma Master Jiantai Symposium in Biomarkers: Next-Gen Tools for ADCs—Defining Biomarkers of Response through Technological Innovation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Ng==
 Does Adherence to Oral Cancer Therapy Matter?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3OQ==
 El Camino de la Pediatría: Finding Our Way Through the Chasm of Pediatric Oncology Drug Development	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1Mw==
 Glues and Heterobifunctionals as Novel Therapeutics	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyMg==
 Metabolic Reprogramming in Metastasis: Nucleotide Pathways as Drivers and Therapeutic Targets	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkwOQ==
+Microbiota-Host Interactions in Colorectal Cancer Development and Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Mg==
 Non-invasive Early Detection of Single-Site Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyNQ==
 Population Sciences for Hematological Malignancies	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2Mw==
-Programmed Cell Death: Mechanisms and Therapeutic Opportunities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2Mg==
 Prostate Cancer: Basic to Clinical Advances	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwMg==
 RAS Inhibitors, Mechanisms of Resistance, and Drug Combinations	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg2OQ==
 Signaling Pathways in Cancer: Dedicated to the Memory of J. Michael Bishop	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxMg==
@@ -164,42 +168,42 @@ Cracking Adaptive Resistance: AI-Enabled, Screen-Guided Targets in Tumor Plastic
 Cutting-Edge Advances in Hematology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwMw==
 Digital Pathology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzMQ==
 Focus on ctDNA	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzOQ==
-Dissecting Hematologic Malignancies at Single-Cell Resolution: Cutting-Edge Advances in Spatial Omics	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyNg==
-Multi-kingdom Microbial Determinants of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNA==
-Dharma Master Jiantai Advances in Lung Cancer Research Session: Small Cell Lung Cancers (SCLC) and Neuroendocrine Cancers (NECs)	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5MA==
+NCI/NIH Opportunities in Funding: NCI-Cancer Diagnosis Program Initiatives and Biospecimen Resources for Investigators	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Mw==
+Mitochondrial Transfer Networks in Cancer Progression	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxMA==
 Immune and Stromal Reprogramming Across the Tumor Micro- and Macroenvironment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzNg==
-Agentic AI as the Cancer Researcher: Autonomous Discovery in Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Mw==
-NCI Funding of Extramural Cancer Biology Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEyMQ==
+FLAIMME: A National Federated Learning Consortium Advancing Privacy-Preserving Oncology AI Through Foundation Model Adaptation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzNA==
+AI in Cancer Research and Care: What We’ve Learned and What Comes Next?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzMA==
 Dharma Master Jiantai Symposium in Targeted Therapy: Immunotherapy and DNA Repair	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Ng==
-Minisymposium: Late-Breaking Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0NA==
-Harnessing the Power of the Immune System: Turning Cold Tumors Hot	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0MQ==
-NCI/NIH Consortia Initiative: Metabolic Dysregulation and Cancer Risk Program—A Transdisciplinary Approach to Obesity-Associated Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEyOA==
+Off-the-Shelf Cell Therapies for Cancer and Beyond	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzNA==
+Dissecting Hematologic Malignancies at Single-Cell Resolution: Cutting-Edge Advances in Spatial Omics	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyNg==
+Beyond Genetics: Macroenvironmental and Microenvironmental Determinants of Cancer Risk, Disease Progression, and Treatment Response	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxOA==
+Synthetic Lethality in Oncology: Progress Made, Pitfalls Encountered, and the Path Forward	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4NA==
 Early-Onset Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxNg==
 Advances in Immunotherapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDExMQ==
+Agentic AI as the Cancer Researcher: Autonomous Discovery in Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2Mw==
 Cancer Detection and Interception Across Tumor Types: Addressing Modifiable Risk Factors for Early Action	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxNQ==
 Chromatin, Epigenetics, and Cancer: Dedicated to the Memory of James D. Watson	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3Nw==
+Dharma Master Jiantai Advances in Lung Cancer Research Session: Small Cell Lung Cancers (SCLC) and Neuroendocrine Cancers (NECs)	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg5MA==
+Harnessing the Power of the Immune System: Turning Cold Tumors Hot	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0MQ==
 HPV Vaccination and Self-Sampling for Cervical Cancer Prevention and Early Detection Globally and in Underserved Settings	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3NQ==
 Immune-Genomic Mechanisms and Treatment of Peritoneal Metastases	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3NQ==
 Latest Advances in Translational Research from the 2025 San Antonio Breast Cancer Symposium	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3OA==
 Minorities in Cancer Research Scientific Symposium: Ancestry-Informed Precision Oncology—Integrating Genomic Diversity into Cancer Prevention and Treatment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxMg==
-Mitochondrial Transfer Networks in Cancer Progression	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxMA==
+NCI/NIH Consortia Initiative: Metabolic Dysregulation and Cancer Risk Program—A Transdisciplinary Approach to Obesity-Associated Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEyOA==
 New Advances in Bispecific Antibody Development	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2MA==
 Pediatric Brain Tumors: Biology to Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5MQ==
 Structural Insights to Cancer Biology and Therapy	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwNg==
-Synthetic Lethality in Oncology: Progress Made, Pitfalls Encountered, and the Path Forward	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4NA==
 Translating Epidemiology to the Clinic: Aspirin for the Prevention and Treatment of Colorectal Cancer—Dedicated to the Memory of Thomas W. Kensler	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3Mw==
 Tumor-secreted Factors: The Next Hallmark of Cancer?	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4OA==
 AACR Gertrude B. Elion Cancer Research Award Lecture	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAwMQ==
 Advances in Melanoma Research and Treatment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2OA==
 Advancing Precision Approaches to Head and Neck Cancers	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1Mg==
 AI-Based Tissue Biomarkers in Cancer: Multimodal AI Across Scales	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA2OQ==
-Beyond Genetics: Macroenvironmental and Microenvironmental Determinants of Cancer Risk, Disease Progression, and Treatment Response	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkxOA==
 Cancer Predisposition Syndromes	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA5NA==
 Claudin-Targeted Therapies: From Tight Junction Biology to Next-Generation Precision Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwNQ==
 Code Meets Cure: Navigating the Regulatory Landscape of AI in Oncology Drug Development	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg3MQ==
-FLAIMME: A National Federated Learning Consortium Advancing Privacy-Preserving Oncology AI Through Foundation Model Adaptation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEzNA==
 Inflammaging and Cancer: Mechanistic Insights and Therapeutic Opportunities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4MA==
-Off-the-Shelf Cell Therapies for Cancer and Beyond	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzNA==
+Multi-kingdom Microbial Determinants of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNA==
 Resistance to Antibody Drug Conjugates	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2Nw==
 RNA Biology in Cancer: Dedicated to the Memory of David Baltimore	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAxMQ==
 Turning the Tide in the Fight Against Pancreatic Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAyMg==
@@ -211,22 +215,22 @@ Inflammation and Immunity in Cancer Progression	https://connect.aacr26.org/event
 KRAS-Targeted Therapies: Overcoming Resistance and Novel Combinations	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA5Ng==
 Machine Learning Approaches for Cancer Diagnosis and Treatment Prediction	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4OA==
 Metabolic Signaling and Therapeutic Vulnerabilities in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwMA==
-NCI/NIH Opportunities in Funding: NCI-Cancer Diagnosis Program Initiatives and Biospecimen Resources for Investigators	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk4Mw==
+Minisymposium: Late-Breaking Research	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0NA==
 Population Sciences at the Forefront 2: Molecular and Genetic Epidemiology of Cancer Risk and Outcomes	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNw==
 Spatial Biomarkers at Single-Cell Resolution: Mapping Tumor Ecosystems with Proteomics, Transcriptomics, and AI	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5Ng==
 Targeted Protein Degradation and Non-cannonical Oncogenic Signaling	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDEwNw==
 Silent Lesions, Dynamic Niches: Harnessing the Stroma to Prevent Cancer Initiation	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk1MQ==
+Genetic and Environmental Determinants of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0OQ==
+The Role of mRNA Translation Reprogramming in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5NQ==
+Understanding the Impact of Mechanobiology on Tumor Evolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Nw==
 Agentic AI as the Oncologist: Clinical Decision Support and Human-AI Collaboration	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA4MQ==
+Biology and Therapeutic Targeting of HIF2a in Renal Cell Carcinoma	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4Nw==
+Optimizing Efficacy While Limiting Toxicity in Immunotherapy for Cancer Treatment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzMA==
+AACR Annual Meeting 2026 Highlights	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyOA==
+Advances in Minimal Residual Disease Detection via Circulating Tumor DNA	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNg==
 Aneuploidy and Mutations in Normal Tissues and Their Role in Cancer Initiation and Cancer Risk	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0MA==
 Innovative Treatment Modalities: Shaping the Future of Oncology	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyNw==
-Radioligand Therapy: Immunity and Biological Mechanisms	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2MQ==
-The Role of mRNA Translation Reprogramming in Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk5NQ==
-AACR Annual Meeting 2026 Highlights	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkyOA==
-Understanding the Impact of Mechanobiology on Tumor Evolution	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk0Nw==
-Genetic and Environmental Determinants of Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA0OQ==
-Biology and Therapeutic Targeting of HIF2a in Renal Cell Carcinoma	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzg4Nw==
-Advances in Minimal Residual Disease Detection via Circulating Tumor DNA	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDAzNg==
 Induced Proximity Pharmacology: Degraders and Beyond	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk3NA==
-Optimizing Efficacy While Limiting Toxicity in Immunotherapy for Cancer Treatment	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzMA==
 Precision for All: Harnessing Multi-omic Technologies to Eliminate Cancer Inequalities	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzkzOA==
+Radioligand Therapy: Immunity and Biological Mechanisms	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxMzk2MQ==
 Targeted Therapy Frontiers in Microsatellite-Stable Metastatic Colorectal Cancer	https://connect.aacr26.org/event/aacr2026/planning/UGxhbm5pbmdfNDQxNDA3MA==
