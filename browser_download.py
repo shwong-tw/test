@@ -19,7 +19,7 @@ script can be stopped and restarted. Results are appended to
 <outdir>/download_log.tsv.
 
 Setup (once):
-    pip install playwright pillow
+    pip install playwright pillow numpy
     playwright install firefox
 If videos stay black or never start (H.264 codec missing): sudo apt install ffmpeg
 
@@ -113,58 +113,93 @@ def fmt_time(seconds):
 
 
 # --------------------------------------------------------------------------
-# Slide-change detection (pure Pillow, no browser needed)
+# Slide-change detection (Pillow + numpy, no browser needed)
 # --------------------------------------------------------------------------
 
-def thumbnail(png_bytes, size=(64, 36)):
+THUMB_SIZE = (256, 144)
+
+
+def thumbnail(png_bytes, size=THUMB_SIZE):
+    """Grayscale, downscaled copy of a screenshot as a numpy array."""
+    import numpy as np
     from PIL import Image
-    return Image.open(io.BytesIO(png_bytes)).convert("L").resize(size)
-
-
-def image_diff(a, b):
-    """Mean absolute pixel difference (0-255) between two thumbnails."""
-    from PIL import ImageChops, ImageStat
-    return ImageStat.Stat(ImageChops.difference(a, b)).mean[0]
+    img = Image.open(io.BytesIO(png_bytes)).convert("L").resize(size, Image.BOX)
+    return np.asarray(img, dtype=np.int16)
 
 
 def is_blank(thumb, max_mean=16.0, min_stddev=2.0):
     """True for dark, (nearly) uniform frames, e.g. black frames while loading."""
-    from PIL import ImageStat
-    stat = ImageStat.Stat(thumb)
-    return stat.mean[0] < max_mean and stat.stddev[0] < min_stddev
+    return thumb.mean() < max_mean and thumb.std() < min_stddev
 
 
 class SlideDetector:
     """
     Decide which sampled frames to keep.
 
-    A frame is kept when it differs from the last kept frame by more than
-    `threshold` AND is stable (differs from the previous sample by at most
-    `stable`), so frames captured mid-transition or mid-animation are skipped
-    and the settled slide is saved instead. Blank frames are never kept.
+    Frames are compared by the share of pixels that changed noticeably
+    (more than `pixel_delta` grey levels), so a new bullet or line of text
+    counts even though it is a small part of the picture.
+
+    - A frame is kept when more than `threshold` % of the pixels differ from
+      the last kept frame, and the picture has settled (at most `stable` %
+      changed since the previous sample) -- this skips mid-fade frames.
+    - Areas that keep changing (e.g. a speaker's webcam inset) are learned
+      from the last `history` samples and left out of the comparison.
+    - If the picture never settles, the frame is kept anyway after
+      `max_unstable` samples, so a slide is not missed because of motion.
+    - Blank (black) frames are never kept.
     """
 
-    def __init__(self, threshold=10.0, stable=None):
+    def __init__(self, threshold=0.5, pixel_delta=25, stable=None, max_unstable=4,
+                 history=20, motion=0.3):
+        from collections import deque
         self.threshold = threshold
+        self.pixel_delta = pixel_delta
         self.stable = threshold / 2 if stable is None else stable
+        self.max_unstable = max_unstable
+        self.motion = motion
+        self.steps = deque(maxlen=history)
+        self.moving = None
         self.last_saved = None
         self.prev = None
+        self.unstable = 0
+
+    def _changed(self, a, b):
+        import numpy as np
+        return np.abs(a - b) > self.pixel_delta
+
+    def _percent(self, mask):
+        if self.moving is not None:
+            still = ~self.moving
+            return 100.0 * (mask & still).sum() / max(1, still.sum())
+        return 100.0 * mask.mean()
+
+    def _save(self, thumb):
+        self.last_saved = thumb
+        self.unstable = 0
+        return True
 
     def feed(self, thumb):
+        import numpy as np
         prev, self.prev = self.prev, thumb
+        step = None
+        if prev is not None:
+            step = self._changed(thumb, prev)
+            self.steps.append(step)
+            if len(self.steps) >= 5:
+                self.moving = np.mean(self.steps, axis=0) >= self.motion
         if is_blank(thumb):
             return False
+        settled = step is None or self._percent(step) <= self.stable
         if self.last_saved is None:
-            if prev is not None and image_diff(thumb, prev) > self.stable:
-                return False          # still changing (e.g. fading in)
-            self.last_saved = thumb
-            return True
-        if image_diff(thumb, self.last_saved) <= self.threshold:
+            return self._save(thumb) if settled else False
+        if self._percent(self._changed(thumb, self.last_saved)) <= self.threshold:
+            self.unstable = 0
             return False
-        if prev is None or image_diff(thumb, prev) > self.stable:
-            return False
-        self.last_saved = thumb
-        return True
+        if settled or self.unstable + 1 >= self.max_unstable:
+            return self._save(thumb)
+        self.unstable += 1
+        return False
 
 
 # --------------------------------------------------------------------------
@@ -428,14 +463,16 @@ async def save_debug(page, frame, out_dir, prefix):
 
 
 async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=10.0,
-                         threshold=10.0, speed=2.0, sample=0.5, max_seconds=None,
+                         threshold=0.5, speed=2.0, sample=0.5, max_seconds=None,
                          stall_timeout=90, size=(1280, 720), quality="720p", verbose=False,
                          log=print):
     """
     Play the video in `frame` and save screenshots to `out_dir`.
 
     The player is first stretched to fill a `size` window and asked for
-    `quality`, so screenshots come out at that size.
+    `quality`, so screenshots come out at that size. A frame is sampled every
+    `sample` seconds of video (on a fixed schedule, so slow screenshots don't
+    stretch the gap).
 
     Returns a dict: status (DONE/STALLED/NO_PLAY), saved, duration,
     video_seconds, wall_seconds, rate (measured video-seconds per wall-second).
@@ -444,8 +481,19 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
     out_dir.mkdir(parents=True, exist_ok=True)
     await expand_player(page, frame, size)
     await request_quality(frame, quality)
+    before = await video_state(frame)
+    start_from = before["t"] if before else 0
     state = await start_playback(page, frame, speed, log, prefix)
     await request_quality(frame, quality)    # again, once the player is active
+    if state and state["t"] > start_from + 1:
+        # Starting playback can take a few seconds; go back so the opening
+        # slide isn't missed.
+        await vimeo_api(frame, "setCurrentTime", start_from)
+        await frame.evaluate(
+            "(t) => { const v = document.querySelector('video');"
+            " if (v.currentTime > t + 1) v.currentTime = t; }", start_from)
+        await page.wait_for_timeout(500)
+        state = await video_state(frame) or state
     if not state:
         log(f"  [{prefix}] could not start the video; saved {prefix}_debug.txt/.png in {out_dir}")
         await save_debug(page, frame, out_dir, prefix)
@@ -465,7 +513,9 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
     last_t, last_progress = state["t"], time.monotonic()
     last_report = time.monotonic()
 
+    period = sample / speed           # wall-clock seconds between samples
     while True:
+        tick = time.monotonic()
         state = await video_state(frame)
         if state is None:
             status = "NO_VIDEO"
@@ -511,7 +561,9 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
             (out_dir / name).write_bytes(png)
             log(f"  [{prefix}] slide {saved} at {fmt_time(t)}")
 
-        await page.wait_for_timeout(int(sample * 1000))
+        wait = period - (time.monotonic() - tick)
+        if wait > 0:
+            await page.wait_for_timeout(int(wait * 1000))
 
     wall = time.monotonic() - start_wall
     video_seconds = last_t - start_t
@@ -622,13 +674,18 @@ async def process_session(page, row, args):
                 result["Caption URL"] = cap_url
                 print(f"[{sid}] captions saved ({len(text)} chars)")
             if clicked and want_slides:
-                # Start the video from a clean page so the transcript panel
-                # doesn't cover it.
-                await page.reload(wait_until="domcontentloaded")
-                frame = await find_video_frame(page, args.timeout)
-                if frame is None:
-                    result["Slides"] = "NO_VIDEO"
-                    return result
+                if args.reload_after_captions:
+                    # Start the video from a clean page.
+                    await page.reload(wait_until="domcontentloaded")
+                    frame = await find_video_frame(page, args.timeout)
+                    if frame is None:
+                        result["Slides"] = "NO_VIDEO"
+                        return result
+                else:
+                    # Close the transcript panel again so it doesn't cover
+                    # the video (no reload, so less flicker).
+                    await click_transcript(page, frame)
+                    await page.wait_for_timeout(500)
         else:
             result["Caption"] = "SKIPPED"
 
@@ -636,7 +693,7 @@ async def process_session(page, row, args):
             out = slides_dir(args.outdir, sid)
             stats = await capture_slides(
                 page, frame, out, sid, mode=args.mode, interval=args.interval,
-                threshold=args.threshold, speed=args.speed, size=args.size,
+                threshold=args.threshold, speed=args.speed, sample=args.sample, size=args.size,
                 quality=None if args.quality == "auto" else args.quality, verbose=args.verbose)
             result["Slides"] = f"{stats['status']}:{stats['saved']}"
             result["Duration"] = fmt_time(stats["duration"])
@@ -737,8 +794,12 @@ def main():
     parser.add_argument("--mode", choices=["change", "interval"], default="change",
                         help="Screenshot on slide change, or every --interval seconds")
     parser.add_argument("--interval", type=float, default=10.0, help="Seconds of video between shots (interval mode)")
-    parser.add_argument("--threshold", type=float, default=10.0,
-                        help="Slide-change sensitivity: mean pixel difference 0-255 (lower = more shots)")
+    parser.add_argument("--threshold", type=float, default=0.5,
+                        help="Slide-change sensitivity: %% of pixels that must change (lower = more shots)")
+    parser.add_argument("--sample", type=float, default=0.5,
+                        help="Seconds of video between checked frames (lower = fewer missed slides)")
+    parser.add_argument("--reload-after-captions", action="store_true",
+                        help="Reload the page after the captions instead of closing the transcript panel")
     parser.add_argument("--speed", type=float, default=2.0, help="Playback speed")
     parser.add_argument("--quality", default="720p", help="Video quality to request, e.g. 720p, 1080p, auto")
     parser.add_argument("--size", default="1280x720", type=parse_size,
@@ -768,10 +829,11 @@ def main():
         return
 
     try:
+        import numpy  # noqa: F401
         import PIL  # noqa: F401
         import playwright  # noqa: F401
     except ImportError as e:
-        sys.exit(f"Missing dependency ({e.name}). Run: pip install playwright pillow && playwright install firefox")
+        sys.exit(f"Missing dependency ({e.name}). Run: pip install playwright pillow numpy && playwright install firefox")
 
     results = asyncio.run(run(args, todo))
     ok_cap = sum(r["Caption"] == "OK" for r in results)

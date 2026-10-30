@@ -10,7 +10,7 @@ machine before running browser_download.py on the AACR pages. It calls the
 same capture_slides() function that browser_download.py uses.
 
 Setup (once):
-    pip install playwright pillow
+    pip install playwright pillow numpy
     playwright install firefox
 If the video stays black or never starts (H.264 codec missing): sudo apt install ffmpeg
 
@@ -111,7 +111,7 @@ async def run(args):
         print(f"Capturing {args.seconds:g} s of video at {args.speed:g}x, mode={args.mode} ...")
         stats = await capture_slides(
             page, frame, args.outdir, "test", mode=args.mode, interval=args.interval,
-            threshold=args.threshold, speed=args.speed, max_seconds=args.seconds,
+            threshold=args.threshold, speed=args.speed, sample=args.sample, max_seconds=args.seconds,
             size=args.size, quality=None if args.quality == "auto" else args.quality,
             verbose=args.verbose)
         size = await frame.evaluate(
@@ -146,7 +146,9 @@ def main():
     parser.add_argument("--outdir", default="test_slides", help="Where to save screenshots")
     parser.add_argument("--mode", choices=["change", "interval"], default="change")
     parser.add_argument("--interval", type=float, default=10.0, help="Seconds between shots (interval mode)")
-    parser.add_argument("--threshold", type=float, default=10.0, help="Slide-change sensitivity (0-255)")
+    parser.add_argument("--threshold", type=float, default=0.5,
+                        help="Slide-change sensitivity: %% of pixels that must change")
+    parser.add_argument("--sample", type=float, default=0.5, help="Seconds of video between checked frames")
     parser.add_argument("--speed", type=float, default=2.0, help="Playback speed")
     parser.add_argument("--quality", default="720p", help="Video quality to request, e.g. 720p, auto")
     parser.add_argument("--size", default="1280x720", type=parse_size, help="Page size (WIDTHxHEIGHT)")
