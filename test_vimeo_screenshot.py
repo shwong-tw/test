@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 from browser_download import (CAPTION_RE, FIREFOX_PREFS, capture_slides, click_transcript,
-                              dismiss_cookie_banner, find_video_frame, fmt_time,
+                              dismiss_cookie_banner, find_video_frame, fmt_time, parse_size,
                               is_cloudflare_challenge)
 
 # The embedded player (what the AACR pages use) rather than the vimeo.com
@@ -42,6 +42,13 @@ def to_embed_url(url):
     """Rewrite https://vimeo.com/<id> to the embeddable player URL."""
     m = re.match(r"https?://(?:www\.)?vimeo\.com/(\d+)(?:[/?#].*)?$", url)
     return f"https://player.vimeo.com/video/{m.group(1)}" if m else url
+
+
+async def close(context, args):
+    """Keep the browser open until Enter, so you can see what happened."""
+    if not args.headless and not args.no_wait:
+        await asyncio.to_thread(input, "\nBrowser left open. Press Enter to close it... ")
+    await context.close()
 
 
 async def run(args):
@@ -65,7 +72,7 @@ async def run(args):
         await page.wait_for_timeout(1500)
         if await is_cloudflare_challenge(page):
             print("FAIL: this page shows a Cloudflare check, which the automated browser can't pass.")
-            await context.close()
+            await close(context, args)
             return 1
         if await dismiss_cookie_banner(page):
             print("Dismissed cookie banner")
@@ -74,7 +81,7 @@ async def run(args):
             print("FAIL: no <video> found in the page or its frames:")
             for f in page.frames:
                 print("   frame:", f.url)
-            await context.close()
+            await close(context, args)
             return 1
         print(f"Video found in frame: {frame.url or '(main page)'}")
 
@@ -99,12 +106,17 @@ async def run(args):
         print(f"Capturing {args.seconds:g} s of video at {args.speed:g}x, mode={args.mode} ...")
         stats = await capture_slides(
             page, frame, args.outdir, "test", mode=args.mode, interval=args.interval,
-            threshold=args.threshold, speed=args.speed, max_seconds=args.seconds)
+            threshold=args.threshold, speed=args.speed, max_seconds=args.seconds,
+            size=args.size, quality=None if args.quality == "auto" else args.quality)
         size = await frame.evaluate(
             "() => { const v = document.querySelector('video');"
             " return v ? [v.videoWidth, v.videoHeight] : null; }")
-        await context.close()
+        code = report(stats, size, args)
+        await close(context, args)
+    return code
 
+
+def report(stats, size, args):
     print("\nResult")
     print(f"  status         : {stats['status']}")
     print(f"  video duration : {fmt_time(stats['duration'])}")
@@ -130,10 +142,13 @@ def main():
     parser.add_argument("--interval", type=float, default=10.0, help="Seconds between shots (interval mode)")
     parser.add_argument("--threshold", type=float, default=10.0, help="Slide-change sensitivity (0-255)")
     parser.add_argument("--speed", type=float, default=2.0, help="Playback speed")
+    parser.add_argument("--quality", default="720p", help="Video quality to request, e.g. 720p, auto")
+    parser.add_argument("--size", default="1280x720", type=parse_size, help="Page size (WIDTHxHEIGHT)")
     parser.add_argument("--seconds", type=float, default=120, help="Seconds of video to capture")
     parser.add_argument("--captions", action="store_true", help="Also try clicking Transcript and saving the .vtt")
     parser.add_argument("--profile", help="Persistent Firefox profile (for logged-in AACR pages)")
     parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--no-wait", action="store_true", help="Close the browser without waiting for Enter")
     args = parser.parse_args()
     args.url = to_embed_url(args.url)
     sys.exit(asyncio.run(run(args)))

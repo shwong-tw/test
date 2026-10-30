@@ -101,6 +101,11 @@ def is_done(outdir, sid, want_captions, want_slides):
     return True
 
 
+def parse_size(text):
+    w, h = text.lower().split("x")
+    return int(w), int(h)
+
+
 def fmt_time(seconds):
     s = int(seconds)
     return f"{s // 3600:02d}h{s % 3600 // 60:02d}m{s % 60:02d}s"
@@ -220,37 +225,100 @@ async def video_state(frame):
     return await frame.evaluate(VIDEO_STATE_JS)
 
 
-async def start_playback(page, frame, speed):
-    """Play the video muted at `speed`; returns the video state, or None if it never starts."""
-    js = """async (speed) => {
-      const v = document.querySelector('video');
-      v.muted = true;
-      try { await v.play(); } catch (e) {}
-      v.playbackRate = speed;
-      return !v.paused;
-    }"""
-    playing = await frame.evaluate(js, speed)
-    if not playing:
-        # Autoplay refused: click the player's play button / the video itself.
-        for sel in ("button.vp-big-play-button", "[aria-label='Play']",
-                    "button[data-play-button]", "video"):
-            try:
-                loc = frame.locator(sel)
-                if await loc.count():
-                    await loc.first.click(timeout=3000)
-                    await page.wait_for_timeout(1000)
-                    if await frame.evaluate(js, speed):
-                        playing = True
-                        break
-            except Exception:
-                pass
-    if not playing:
-        return None
+async def set_player_ui_hidden(frame, hidden):
+    """Toggle the CSS that hides the Vimeo player UI (it must be visible to click play)."""
     try:
-        await frame.add_style_tag(content=HIDE_PLAYER_UI_CSS)
+        await frame.evaluate("""([css, hidden]) => {
+          let st = document.getElementById('bd-hide-ui');
+          if (!st) { st = document.createElement('style'); st.id = 'bd-hide-ui';
+                     st.textContent = css; document.head.appendChild(st); }
+          st.disabled = !hidden;
+        }""", [HIDE_PLAYER_UI_CSS, hidden])
     except Exception:
         pass
-    await page.mouse.move(0, 0)       # move away so hover UI fades out
+
+
+async def is_advancing(page, frame, wait_ms=1500):
+    """True if the video is playing and its time moves forward."""
+    s1 = await video_state(frame)
+    await page.wait_for_timeout(wait_ms)
+    s2 = await video_state(frame)
+    return bool(s1 and s2 and not s2["paused"] and s2["t"] > s1["t"] + 0.2)
+
+
+async def ensure_playing(page, frame, speed, log=print, label=""):
+    """
+    Make the video play (muted, at `speed`). Returns True if it is playing.
+
+    Players such as Vimeo's own the play state and may pause a video started
+    from script, so this falls back to clicking the player the way a person
+    does: a real mouse click on the centre of the video.
+    """
+    set_rate = ("(s) => { const v = document.querySelector('video');"
+                " v.muted = true; v.playbackRate = s; }")
+    await frame.evaluate(set_rate, speed)
+    if await is_advancing(page, frame, 1000):
+        return True
+
+    async def paused():
+        st = await video_state(frame)
+        return bool(st and st["paused"])
+
+    attempts = [
+        ("play()", lambda: frame.evaluate(
+            "() => document.querySelector('video').play().catch(() => {})")),
+        ("click on video", lambda: click_center(page, frame)),
+        ("play button", lambda: click_play_button(frame)),
+        ("keyboard", lambda: press_play_key(page, frame)),
+    ]
+    await set_player_ui_hidden(frame, False)
+    try:
+        for name, action in attempts:
+            if not await paused() and await is_advancing(page, frame, 1000):
+                break
+            if await paused():
+                try:
+                    await action()
+                except Exception:
+                    continue
+            await frame.evaluate(set_rate, speed)
+            if await is_advancing(page, frame):
+                if name != "play()":
+                    log(f"  [{label}] started playback via {name}")
+                break
+        else:
+            return False
+    finally:
+        await page.mouse.move(0, 0)   # move away so hover UI fades out
+        await set_player_ui_hidden(frame, True)
+    await frame.evaluate(set_rate, speed)
+    return True
+
+
+async def click_center(page, frame):
+    box = await frame.locator("video").first.bounding_box()
+    if box:
+        await page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+
+async def click_play_button(frame):
+    for sel in ("button.vp-big-play-button", "button[aria-label*='Play' i]",
+                "[data-play-button]", "button.play"):
+        loc = frame.locator(sel)
+        if await loc.count():
+            await loc.first.click(timeout=3000)
+            return
+
+
+async def press_play_key(page, frame):
+    await frame.locator("video").first.focus()
+    await page.keyboard.press("Space")
+
+
+async def start_playback(page, frame, speed, log=print, label=""):
+    """Play the video muted at `speed`; returns the video state, or None if it never starts."""
+    if not await ensure_playing(page, frame, speed, log, label):
+        return None
     # Wait for a finite duration (metadata loaded).
     for _ in range(30):
         state = await video_state(frame)
@@ -260,18 +328,69 @@ async def start_playback(page, frame, speed):
     return await video_state(frame)
 
 
+EXPAND_IFRAME_JS = """el => {
+  el.style.cssText = 'position:fixed !important; top:0 !important; left:0 !important;'
+    + 'width:100vw !important; height:100vh !important; max-width:none !important;'
+    + 'max-height:none !important; margin:0 !important; border:0 !important;'
+    + 'z-index:2147483647 !important; background:#000 !important;';
+  document.documentElement.style.overflow = 'hidden';
+}"""
+
+
+async def expand_player(page, frame, size=(1280, 720)):
+    """
+    Make the video fill the browser window: resize the window's page area to
+    `size` and stretch every iframe between the page and the player (AACR page
+    -> vimeo.com/event embed -> player.vimeo.com) to the full window.
+    """
+    if size:
+        await page.set_viewport_size({"width": size[0], "height": size[1]})
+    f = frame
+    while f.parent_frame is not None:
+        try:
+            el = await f.frame_element()
+            await el.evaluate(EXPAND_IFRAME_JS)
+        except Exception:
+            pass
+        f = f.parent_frame
+    await page.wait_for_timeout(1000)
+
+
+async def request_quality(frame, quality):
+    """
+    Ask the Vimeo player for a quality (e.g. "720p") through its embed API
+    (postMessage). Has no effect if the video doesn't offer a quality choice;
+    the player then picks one itself, usually matching the player size.
+    """
+    if not quality or frame.parent_frame is None:
+        return
+    msg = '{"method":"setQuality","value":"%s"}' % quality
+    try:
+        await frame.parent_frame.evaluate(
+            "(msg) => { for (const f of document.querySelectorAll('iframe'))"
+            " { try { f.contentWindow.postMessage(msg, '*'); } catch (e) {} } }", msg)
+    except Exception:
+        pass
+
+
 async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=10.0,
                          threshold=10.0, speed=2.0, sample=0.5, max_seconds=None,
-                         stall_timeout=90, log=print):
+                         stall_timeout=90, size=(1280, 720), quality="720p", log=print):
     """
     Play the video in `frame` and save screenshots to `out_dir`.
+
+    The player is first stretched to fill a `size` window and asked for
+    `quality`, so screenshots come out at that size.
 
     Returns a dict: status (DONE/STALLED/NO_PLAY), saved, duration,
     video_seconds, wall_seconds, rate (measured video-seconds per wall-second).
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    state = await start_playback(page, frame, speed)
+    await expand_player(page, frame, size)
+    await request_quality(frame, quality)
+    state = await start_playback(page, frame, speed, log, prefix)
+    await request_quality(frame, quality)    # again, once the player is active
     if not state:
         return {"status": "NO_PLAY", "saved": 0, "duration": 0,
                 "video_seconds": 0, "wall_seconds": 0, "rate": 0}
@@ -287,6 +406,7 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
     next_interval_t = start_t
     saved, status = 0, "DONE"
     last_t, last_progress = state["t"], time.monotonic()
+    last_report = time.monotonic()
 
     while True:
         state = await video_state(frame)
@@ -298,13 +418,21 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
             break
 
         # Keep it playing at the requested speed (Vimeo autopause, buffering, etc.).
-        if state["paused"] or abs(state["rate"] - speed) > 0.01:
+        if state["paused"]:
+            log(f"  [{prefix}] video paused at {fmt_time(t)}, resuming")
+            await ensure_playing(page, frame, speed, log, prefix)
+        elif abs(state["rate"] - speed) > 0.01:
             await frame.evaluate(
-                "(s) => { const v = document.querySelector('video');"
-                " v.muted = true; v.playbackRate = s; v.play().catch(() => {}); }", speed)
+                "(s) => { document.querySelector('video').playbackRate = s; }", speed)
 
         if t > last_t + 0.01:
             last_t, last_progress = t, time.monotonic()
+        if time.monotonic() - last_report >= 30:
+            wall = time.monotonic() - start_wall
+            log(f"  [{prefix}] at {fmt_time(t)} / {fmt_time(duration)}, "
+                f"speed {(t - start_t) / wall if wall else 0:.2f}x, "
+                f"video {state['w']}x{state['h']}, {saved} slides")
+            last_report = time.monotonic()
         elif time.monotonic() - last_progress > stall_timeout:
             status = "STALLED"
             break
@@ -450,7 +578,8 @@ async def process_session(page, row, args):
             out = slides_dir(args.outdir, sid)
             stats = await capture_slides(
                 page, frame, out, sid, mode=args.mode, interval=args.interval,
-                threshold=args.threshold, speed=args.speed)
+                threshold=args.threshold, speed=args.speed, size=args.size,
+                quality=None if args.quality == "auto" else args.quality)
             result["Slides"] = f"{stats['status']}:{stats['saved']}"
             result["Duration"] = fmt_time(stats["duration"])
             print(f"[{sid}] {stats['status']}: {stats['saved']} slides, "
@@ -480,24 +609,21 @@ def append_log(outdir, result):
         w.writerow(result)
 
 
-async def ensure_logged_in(context, url):
-    page = await context.new_page()
-    try:
-        for attempt in range(3):
-            await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            await page.wait_for_timeout(3000)
-            if await is_cloudflare_challenge(page):
-                print("Cloudflare is blocking the automated browser on this site; stopping.")
-                return False
-            on_session = PLANNING_PATH in page.url
-            has_login = await page.locator("input[type='password']").count() > 0
-            if on_session and not has_login:
-                return True
-            print("\nPlease log in in the Firefox window (the session page should open).")
-            await asyncio.to_thread(input, "Press Enter when you are logged in... ")
-        return False
-    finally:
-        await page.close()
+async def ensure_logged_in(page, url):
+    """Open `url` in `page`; if a login is needed, wait for the user to log in."""
+    for attempt in range(3):
+        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        await page.wait_for_timeout(3000)
+        if await is_cloudflare_challenge(page):
+            print("Cloudflare is blocking the automated browser on this site; stopping.")
+            return False
+        on_session = PLANNING_PATH in page.url
+        has_login = await page.locator("input[type='password']").count() > 0
+        if on_session and not has_login:
+            return True
+        print("\nPlease log in in the Firefox window (the session page should open).")
+        await asyncio.to_thread(input, "Press Enter when you are logged in... ")
+    return False
 
 
 async def run(args, rows):
@@ -514,11 +640,13 @@ async def run(args, rows):
             args.profile, headless=args.headless, firefox_user_prefs=FIREFOX_PREFS,
             viewport={"width": 1600, "height": 1000})
         try:
-            if not await ensure_logged_in(context, rows[0]["URL"]):
+            # Reuse the window Firefox opens at start (instead of leaving it blank).
+            first_page = context.pages[0] if context.pages else await context.new_page()
+            if not await ensure_logged_in(first_page, rows[0]["URL"]):
                 sys.exit("Not logged in; stopping.")
 
             async def worker(n):
-                page = await context.new_page()
+                page = first_page if n == 1 else await context.new_page()
                 while True:
                     try:
                         row = queue.get_nowait()
@@ -554,6 +682,9 @@ def main():
     parser.add_argument("--threshold", type=float, default=10.0,
                         help="Slide-change sensitivity: mean pixel difference 0-255 (lower = more shots)")
     parser.add_argument("--speed", type=float, default=2.0, help="Playback speed")
+    parser.add_argument("--quality", default="720p", help="Video quality to request, e.g. 720p, 1080p, auto")
+    parser.add_argument("--size", default="1280x720", type=parse_size,
+                        help="Browser page size the video is expanded to (WIDTHxHEIGHT)")
     parser.add_argument("--timeout", type=int, default=30, help="Seconds to wait for video/captions")
     parser.add_argument("--overwrite", action="store_true", help="Redo sessions that are already done")
     parser.add_argument("--headless", action="store_true", help="Hide the browser (after you have logged in)")
