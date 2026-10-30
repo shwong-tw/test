@@ -11,7 +11,7 @@ this opens the session page in Firefox (driven by Playwright) and:
 2. Slides: plays the video muted at --speed (default 2x) and screenshots the
    video whenever the picture changes (slide change), or every --interval
    seconds of video time with --mode interval. Saved as
-   <outdir>/slides/Sxxx/Sxxx_0001_00h01m12s.png.
+   <outdir>/slides/Sxxx/Sxxx_00h01m12s.png.
 
 The browser profile is kept in --profile, so you log in by hand on the first
 run and later runs reuse the session. Finished sessions are skipped, so the
@@ -549,6 +549,7 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
     detector = SlideDetector(threshold)
     next_interval_t = start_t
     saved, status = 0, "DONE"
+    written = set()
     last_t, last_progress = state["t"], time.monotonic()
     last_report = time.monotonic()
 
@@ -596,7 +597,12 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
 
         if keep:
             saved += 1
-            name = f"{prefix}_{saved:04d}_{fmt_time(t)}.png"
+            name = f"{prefix}_{fmt_time(t)}.png"
+            n = 2
+            while (out_dir / name).exists() and name in written:
+                name = f"{prefix}_{fmt_time(t)}_{n}.png"    # same second as the last one
+                n += 1
+            written.add(name)
             (out_dir / name).write_bytes(png)
             log(f"  [{prefix}] slide {saved} at {fmt_time(t)}")
 
