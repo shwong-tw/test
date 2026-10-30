@@ -7,8 +7,10 @@ containing the session title in an <h3> (falling back to the banner <img alt>,
 then the small-card title <span>).
 Titles are checked against the "Session Title" column (column 4) of
 AACR2026_Program_Schedule.xlsx, and results are written as a tab-separated
-file with "Session Title", "URL" and "Schedule Session Title" columns, the
-last being the one-to-one matched xlsx title (blank when there is no match).
+file with "ID", "Session Title", "URL" and "Schedule Session Title" columns.
+"ID" is S001, S002, ... in HTML card order (so it can shift if the HTML changes;
+treat the committed TXT as the reference), and "Schedule Session Title" is the
+one-to-one matched xlsx title (blank when there is no match).
 
 Usage:
     python extract_url.py [HTML ...] [--xlsx FILE] [--output FILE] [--prefix URL]
@@ -157,9 +159,9 @@ def main():
             unmatched.append((title, url))
 
     with open(args.output, "w", encoding="utf-8") as f:
-        f.write("Session Title\tURL\tSchedule Session Title\n")
-        for url, title in seen.items():
-            f.write(f"{title}\t{url}\t{matches.get(title, ('',))[0]}\n")
+        f.write("ID\tSession Title\tURL\tSchedule Session Title\n")
+        for i, (url, title) in enumerate(seen.items(), 1):
+            f.write(f"S{i:03d}\t{title}\t{url}\t{matches.get(title, ('',))[0]}\n")
 
     print(f"\nWrote {len(seen)} sessions to {args.output}")
     print(f"Schedule match: {counts['exact']} exact, {counts['prefix']} prefix, "
