@@ -165,6 +165,17 @@ class SlideDetector:
 # Browser helpers
 # --------------------------------------------------------------------------
 
+async def is_cloudflare_challenge(page):
+    """True if Cloudflare's "verify you are human" page is shown."""
+    try:
+        title = (await page.title()).lower()
+    except Exception:
+        title = ""
+    if "just a moment" in title or "attention required" in title:
+        return True
+    return any("challenges.cloudflare.com" in (f.url or "") for f in page.frames)
+
+
 async def dismiss_cookie_banner(page):
     """Best effort: click an 'Accept'/'Allow all' cookie button if one is shown."""
     pattern = re.compile(r"^(accept( all)?( cookies)?|allow all( cookies)?|i agree|agree|got it)$", re.I)
@@ -383,6 +394,11 @@ async def process_session(page, row, args):
     page.on("response", on_response)
     try:
         await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        await page.wait_for_timeout(1500)
+        if await is_cloudflare_challenge(page):
+            print(f"[{sid}] blocked by a Cloudflare check")
+            result["Caption"] = result["Slides"] = "CLOUDFLARE"
+            return result
         await dismiss_cookie_banner(page)
         frame = await find_video_frame(page, args.timeout)
         if frame is None:
@@ -470,6 +486,9 @@ async def ensure_logged_in(context, url):
         for attempt in range(3):
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
             await page.wait_for_timeout(3000)
+            if await is_cloudflare_challenge(page):
+                print("Cloudflare is blocking the automated browser on this site; stopping.")
+                return False
             on_session = PLANNING_PATH in page.url
             has_login = await page.locator("input[type='password']").count() > 0
             if on_session and not has_login:

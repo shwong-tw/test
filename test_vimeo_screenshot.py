@@ -2,7 +2,9 @@
 """
 Try the slide-screenshot code from browser_download.py on one video.
 
-By default it uses a public Vimeo video (no login needed), so you can check
+By default it uses a public Vimeo video in its embedded player
+(player.vimeo.com, as on the AACR pages; the vimeo.com page itself is behind
+a Cloudflare check), so you can check
 that playback at 2x, slide-change detection and screenshots work on your
 machine before running browser_download.py on the AACR pages. It calls the
 same capture_slides() function that browser_download.py uses.
@@ -23,13 +25,23 @@ Usage:
 
 import argparse
 import asyncio
+import re
 import sys
 from pathlib import Path
 
 from browser_download import (CAPTION_RE, FIREFOX_PREFS, capture_slides, click_transcript,
-                              dismiss_cookie_banner, find_video_frame, fmt_time)
+                              dismiss_cookie_banner, find_video_frame, fmt_time,
+                              is_cloudflare_challenge)
 
-DEFAULT_URL = "https://vimeo.com/228314742"
+# The embedded player (what the AACR pages use) rather than the vimeo.com
+# page, which is behind a Cloudflare check.
+DEFAULT_URL = "https://player.vimeo.com/video/228314742"
+
+
+def to_embed_url(url):
+    """Rewrite https://vimeo.com/<id> to the embeddable player URL."""
+    m = re.match(r"https?://(?:www\.)?vimeo\.com/(\d+)(?:[/?#].*)?$", url)
+    return f"https://player.vimeo.com/video/{m.group(1)}" if m else url
 
 
 async def run(args):
@@ -50,6 +62,11 @@ async def run(args):
 
         print(f"Opening {args.url}")
         await page.goto(args.url, wait_until="domcontentloaded", timeout=60000)
+        await page.wait_for_timeout(1500)
+        if await is_cloudflare_challenge(page):
+            print("FAIL: this page shows a Cloudflare check, which the automated browser can't pass.")
+            await context.close()
+            return 1
         if await dismiss_cookie_banner(page):
             print("Dismissed cookie banner")
         frame = await find_video_frame(page, 30)
@@ -118,6 +135,7 @@ def main():
     parser.add_argument("--profile", help="Persistent Firefox profile (for logged-in AACR pages)")
     parser.add_argument("--headless", action="store_true")
     args = parser.parse_args()
+    args.url = to_embed_url(args.url)
     sys.exit(asyncio.run(run(args)))
 
 
