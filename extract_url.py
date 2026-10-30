@@ -7,7 +7,8 @@ containing the session title in an <h3> (falling back to the banner <img alt>,
 then the small-card title <span>).
 Titles are checked against the "Session Title" column (column 4) of
 AACR2026_Program_Schedule.xlsx, and results are written as a tab-separated
-file with "Session Title" and "URL" columns.
+file with "Session Title", "URL" and "Schedule Session Title" columns, the
+last being the one-to-one matched xlsx title (blank when there is no match).
 
 Usage:
     python extract_url.py [HTML ...] [--xlsx FILE] [--output FILE] [--prefix URL]
@@ -63,32 +64,59 @@ def extract_sessions(html_path):
 
 
 def load_schedule_titles(xlsx_path):
-    """Return the set of normalized titles from column 4 'Session Title'."""
+    """Return {normalized title: original title} from column 4 'Session Title'."""
     wb = openpyxl.load_workbook(xlsx_path, read_only=True)
     ws = wb.active
-    titles = {normalize(str(row[0]))
-              for row in ws.iter_rows(min_row=2, min_col=4, max_col=4, values_only=True)
-              if row[0]}
+    titles = {}
+    for row in ws.iter_rows(min_row=2, min_col=4, max_col=4, values_only=True):
+        if row[0]:
+            key = normalize(str(row[0]))
+            if key:
+                titles.setdefault(key, clean(str(row[0])))
     wb.close()
-    titles.discard("")
     return titles
 
 
-def match_title(title, schedule, min_len=MIN_PARTIAL_LEN):
+def match_kind(key, s, min_len=MIN_PARTIAL_LEN):
     """
-    Return "exact", "partial" or None.
+    Classify how normalized HTML title `key` matches normalized schedule title `s`.
 
-    "partial" covers schedule cells where the PDF extraction prefixed the title
-    with a track name (e.g. "Immunology Combating T Cell Checkpoints") or cut
-    it short (e.g. "Bayesian and Model-Assisted Designs for Early-Phase").
+    "exact"   - identical (ignoring case/punctuation/accents)
+    "prefix"  - the schedule cell gained extra words in front, e.g.
+                "Immunology Combating T Cell Checkpoints"
+    "partial" - any other containment, e.g. a schedule cell cut short like
+                "Bayesian and Model-Assisted Designs for Early-Phase"
     """
-    key = normalize(title)
-    if key in schedule:
+    if key == s:
         return "exact"
-    for s in schedule:
-        if (len(key) >= min_len and key in s) or (len(s) >= min_len and s in key):
-            return "partial"
+    if len(key) >= min_len and s.endswith(key):
+        return "prefix"
+    if (len(key) >= min_len and key in s) or (len(s) >= min_len and s in key):
+        return "partial"
     return None
+
+
+def match_titles(titles, schedule):
+    """
+    One-to-one match HTML titles to schedule titles.
+
+    Returns {html title: (schedule title, kind)}. Tiers are assigned in order
+    (exact, prefix, partial); within a tier the closest pairs (smallest length
+    difference) win, and each schedule title is used at most once.
+    """
+    keys = {t: normalize(t) for t in titles}
+    matches, used = {}, set()
+    for tier in ("exact", "prefix", "partial"):
+        pairs = sorted(
+            (abs(len(s) - len(k)), t, s)
+            for t, k in keys.items() if t not in matches
+            for s in schedule if s not in used and match_kind(k, s) == tier
+        )
+        for _, t, s in pairs:
+            if t not in matches and s not in used:
+                matches[t] = (schedule[s], tier)
+                used.add(s)
+    return matches
 
 
 def main():
@@ -118,29 +146,28 @@ def main():
         print(f"{path}: {len(found)} cards, {new} new sessions")
 
     schedule = load_schedule_titles(args.xlsx)
+    matches = match_titles(set(seen.values()), schedule)
 
-    counts = {"exact": 0, "partial": 0}
+    counts = {"exact": 0, "prefix": 0, "partial": 0}
     unmatched = []
     for url, title in seen.items():
-        kind = match_title(title, schedule)
-        if kind:
-            counts[kind] += 1
+        if title in matches:
+            counts[matches[title][1]] += 1
         else:
             unmatched.append((title, url))
 
     with open(args.output, "w", encoding="utf-8") as f:
-        f.write("Session Title\tURL\n")
+        f.write("Session Title\tURL\tSchedule Session Title\n")
         for url, title in seen.items():
-            f.write(f"{title}\t{url}\n")
+            f.write(f"{title}\t{url}\t{matches.get(title, ('',))[0]}\n")
 
     print(f"\nWrote {len(seen)} sessions to {args.output}")
-    print(f"Schedule check: {counts['exact']} exact, {counts['partial']} partial, "
-          f"{len(unmatched)} not found")
+    print(f"Schedule match: {counts['exact']} exact, {counts['prefix']} prefix, "
+          f"{counts['partial']} partial, {len(unmatched)} not found")
     if unmatched:
-        print("WARNING: titles not found in schedule 'Session Title' column:")
+        print("WARNING: titles with no match in schedule 'Session Title' column:")
         for title, url in unmatched:
             print(f"  - {title}  ({url})")
-
 
 if __name__ == "__main__":
     main()
