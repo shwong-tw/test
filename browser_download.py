@@ -28,6 +28,10 @@ Usage:
     python browser_download.py --workers 3                 # everything
     python browser_download.py --no-screenshots            # captions only
     python browser_download.py --dry-run                   # list what would run
+
+Session pool: if session_ids.txt exists (or --pool FILE), only the IDs in it
+are processed, e.g. "S001 S005 S010-S020" (spaces, commas or new lines;
+'#' comments). --only and --start then choose from within that pool.
 """
 
 import argparse
@@ -45,6 +49,7 @@ from urllib.parse import urljoin
 DEFAULT_INPUT = "AACR2026_Session_URL.txt"
 DEFAULT_OUTDIR = "output"
 DEFAULT_PROFILE = os.path.expanduser("~/.aacr26_firefox_profile")
+DEFAULT_POOL = "session_ids.txt"
 CAPTION_RE = re.compile(r"captions\.vimeo\.com/captions/.*\.vtt|/texttrack/.*\.vtt")
 PLANNING_PATH = "/event/aacr2026/planning/"
 DONE_MARKER = ".done"
@@ -71,15 +76,49 @@ HIDE_PLAYER_UI_CSS = """
 # Session list
 # --------------------------------------------------------------------------
 
-def read_sessions(path, only=None, start=None):
-    """Return [{'ID', 'Session Title', 'URL', ...}] filtered by --only/--start."""
+def read_pool(path):
+    """
+    Read session IDs from a pool file: IDs separated by spaces, commas or new
+    lines, ranges like S010-S020 allowed, '#' starts a comment.
+    """
+    ids = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            for tok in re.split(r"[\s,]+", line.split("#", 1)[0].strip()):
+                if not tok:
+                    continue
+                m = re.fullmatch(r"[Ss](\d+)\s*-\s*[Ss]?(\d+)", tok)
+                if m:
+                    ids += [f"S{i:03d}" for i in range(int(m.group(1)), int(m.group(2)) + 1)]
+                elif re.fullmatch(r"[Ss]\d+", tok):
+                    ids.append(f"S{int(tok[1:]):03d}")
+                else:
+                    print(f"{path}: ignoring '{tok}' (not a session ID)")
+    return ids
+
+
+def read_sessions(path, only=None, start=None, pool=None):
+    """
+    Return [{'ID', 'Session Title', 'URL', ...}]: the sessions in `pool` (a
+    list of IDs; None = all), then filtered by --only/--start.
+    """
     with open(path, encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f, delimiter="\t"))
     if not rows or "ID" not in rows[0] or "URL" not in rows[0]:
         sys.exit(f"{path}: expected tab-separated columns 'ID' and 'URL' "
                  "(regenerate it with extract_url.py)")
+    known = {r["ID"].upper() for r in rows}
+    if pool is not None:
+        in_pool = {s.upper() for s in pool}
+        unknown = sorted(in_pool - known)
+        if unknown:
+            print(f"Pool IDs not in {path} (ignored): {' '.join(unknown)}")
+        rows = [r for r in rows if r["ID"].upper() in in_pool]
     if only:
         wanted = {s.upper() for s in only}
+        outside = sorted(wanted - {r["ID"].upper() for r in rows})
+        if outside:
+            print(f"--only IDs not in the pool (skipped): {' '.join(outside)}")
         rows = [r for r in rows if r["ID"].upper() in wanted]
     if start:
         rows = [r for r in rows if r["ID"].upper() >= start.upper()]
@@ -786,8 +825,11 @@ def main():
     parser.add_argument("--input", default=DEFAULT_INPUT, help="Session list (TSV with ID, URL)")
     parser.add_argument("--outdir", default=DEFAULT_OUTDIR, help="Output folder")
     parser.add_argument("--profile", default=DEFAULT_PROFILE, help="Firefox profile folder (keeps login)")
-    parser.add_argument("--only", nargs="+", metavar="SXXX", help="Only these session IDs")
-    parser.add_argument("--start", metavar="SXXX", help="Start from this session ID")
+    parser.add_argument("--pool", default=DEFAULT_POOL,
+                        help=f"File of session IDs to work on (default {DEFAULT_POOL} if it exists, "
+                             "otherwise all sessions); --only/--start pick from this pool")
+    parser.add_argument("--only", nargs="+", metavar="SXXX", help="Only these session IDs (within the pool)")
+    parser.add_argument("--start", metavar="SXXX", help="Start from this session ID (within the pool)")
     parser.add_argument("--workers", type=int, default=3, help="Sessions processed in parallel")
     parser.add_argument("--no-captions", action="store_true", help="Skip caption download")
     parser.add_argument("--no-screenshots", action="store_true", help="Skip slide screenshots")
@@ -812,7 +854,13 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="List the sessions that would be processed")
     args = parser.parse_args()
 
-    rows = read_sessions(args.input, args.only, args.start)
+    pool = None
+    if Path(args.pool).exists():
+        pool = read_pool(args.pool)
+        print(f"Pool: {len(pool)} session IDs from {args.pool}")
+    elif args.pool != DEFAULT_POOL:
+        sys.exit(f"Pool file not found: {args.pool}")
+    rows = read_sessions(args.input, args.only, args.start, pool)
     todo = [r for r in rows if args.overwrite or not is_done(
         args.outdir, r["ID"], not args.no_captions, not args.no_screenshots)]
     print(f"{len(rows)} sessions selected, {len(rows) - len(todo)} already done, {len(todo)} to process")
