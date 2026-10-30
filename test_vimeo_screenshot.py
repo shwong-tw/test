@@ -14,6 +14,11 @@ Setup (once):
     playwright install firefox
 If the video stays black or never starts (H.264 codec missing): sudo apt install ffmpeg
 
+Note: Vimeo may refuse script-controlled browsers on its own site ("we
+couldn't verify the security of your connection"). If so, test on one AACR
+session instead (last example below), after logging in once with
+browser_download.py.
+
 Usage:
     python test_vimeo_screenshot.py                                  # 2 min of the public video
     python test_vimeo_screenshot.py --mode interval --interval 10 --seconds 60

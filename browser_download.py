@@ -34,6 +34,7 @@ import argparse
 import asyncio
 import csv
 import io
+import json
 import os
 import re
 import sys
@@ -254,9 +255,14 @@ async def ensure_playing(page, frame, speed, log=print, label=""):
     from script, so this falls back to clicking the player the way a person
     does: a real mouse click on the centre of the video.
     """
-    set_rate = ("(s) => { const v = document.querySelector('video');"
-                " v.muted = true; v.playbackRate = s; }")
-    await frame.evaluate(set_rate, speed)
+    set_rate_js = ("(s) => { const v = document.querySelector('video');"
+                   " v.muted = true; v.playbackRate = s; }")
+
+    async def set_rate():
+        await vimeo_api(frame, "setPlaybackRate", speed)
+        await frame.evaluate(set_rate_js, speed)
+
+    await set_rate()
     if await is_advancing(page, frame, 1000):
         return True
 
@@ -265,6 +271,7 @@ async def ensure_playing(page, frame, speed, log=print, label=""):
         return bool(st and st["paused"])
 
     attempts = [
+        ("player API", lambda: api_play(frame, speed)),
         ("play()", lambda: frame.evaluate(
             "() => document.querySelector('video').play().catch(() => {})")),
         ("click on video", lambda: click_center(page, frame)),
@@ -281,9 +288,9 @@ async def ensure_playing(page, frame, speed, log=print, label=""):
                     await action()
                 except Exception:
                     continue
-            await frame.evaluate(set_rate, speed)
+            await set_rate()
             if await is_advancing(page, frame):
-                if name != "play()":
+                if name not in ("player API", "play()"):
                     log(f"  [{label}] started playback via {name}")
                 break
         else:
@@ -291,7 +298,7 @@ async def ensure_playing(page, frame, speed, log=print, label=""):
     finally:
         await page.mouse.move(0, 0)   # move away so hover UI fades out
         await set_player_ui_hidden(frame, True)
-    await frame.evaluate(set_rate, speed)
+    await set_rate()
     return True
 
 
@@ -356,19 +363,66 @@ async def expand_player(page, frame, size=(1280, 720)):
     await page.wait_for_timeout(1000)
 
 
-async def request_quality(frame, quality):
+async def vimeo_api(frame, method, value=None):
     """
-    Ask the Vimeo player for a quality (e.g. "720p") through its embed API
-    (postMessage). Has no effect if the video doesn't offer a quality choice;
-    the player then picks one itself, usually matching the player size.
+    Send a command to the Vimeo player through its embed API (postMessage
+    from the frame that embeds the player), e.g. "play", "setQuality".
     """
-    if not quality or frame.parent_frame is None:
+    if frame.parent_frame is None:
         return
-    msg = '{"method":"setQuality","value":"%s"}' % quality
+    msg = {"method": method} if value is None else {"method": method, "value": value}
     try:
         await frame.parent_frame.evaluate(
             "(msg) => { for (const f of document.querySelectorAll('iframe'))"
-            " { try { f.contentWindow.postMessage(msg, '*'); } catch (e) {} } }", msg)
+            " { try { f.contentWindow.postMessage(msg, '*'); } catch (e) {} } }",
+            json.dumps(msg))
+    except Exception:
+        pass
+
+
+async def request_quality(frame, quality):
+    """
+    Ask the Vimeo player for a quality (e.g. "720p"). Has no effect if the
+    video doesn't offer a quality choice; the player then picks one itself,
+    usually matching the player size.
+    """
+    if quality:
+        await vimeo_api(frame, "setQuality", quality)
+
+
+async def api_play(frame, speed):
+    await vimeo_api(frame, "setVolume", 0)
+    await vimeo_api(frame, "setPlaybackRate", speed)
+    await vimeo_api(frame, "play")
+
+
+async def save_debug(page, frame, out_dir, prefix):
+    """Save a screenshot and a description of the player, for when playback fails."""
+    out_dir = Path(out_dir)
+    await set_player_ui_hidden(frame, False)    # report what a click would really hit
+    lines = ["Frames:"] + [f"  {f.url}" for f in page.frames]
+    try:
+        info = await frame.evaluate("""() => {
+          const v = document.querySelector('video');
+          const desc = el => el ? (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')
+              + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).join('.') : '')
+              + (el.getAttribute('aria-label') ? ` [aria-label="${el.getAttribute('aria-label')}"]` : '')) : null;
+          const at = desc(document.elementFromPoint(innerWidth / 2, innerHeight / 2));
+          const buttons = [...document.querySelectorAll('button, [role=button]')].slice(0, 60)
+              .map(b => desc(b) + ' "' + (b.innerText || '').trim().slice(0, 40) + '"');
+          return {video: v && {paused: v.paused, t: v.currentTime, d: v.duration, ready: v.readyState,
+                               network: v.networkState, error: v.error && v.error.code,
+                               muted: v.muted, rate: v.playbackRate, w: v.videoWidth, h: v.videoHeight},
+                  elementAtCenter: at, buttons};
+        }""")
+        lines += [f"Video frame: {frame.url}", f"Video: {info['video']}",
+                  f"Element at centre of player: {info['elementAtCenter']}", "Buttons:"]
+        lines += [f"  {b}" for b in info["buttons"]]
+    except Exception as e:
+        lines.append(f"(could not inspect player: {e})")
+    (out_dir / f"{prefix}_debug.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    try:
+        await page.screenshot(path=str(out_dir / f"{prefix}_debug.png"))
     except Exception:
         pass
 
@@ -392,6 +446,8 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
     state = await start_playback(page, frame, speed, log, prefix)
     await request_quality(frame, quality)    # again, once the player is active
     if not state:
+        log(f"  [{prefix}] could not start the video; saved {prefix}_debug.txt/.png in {out_dir}")
+        await save_debug(page, frame, out_dir, prefix)
         return {"status": "NO_PLAY", "saved": 0, "duration": 0,
                 "video_seconds": 0, "wall_seconds": 0, "rate": 0}
 
