@@ -616,7 +616,8 @@ async def capture_slides(page, frame, out_dir, prefix, mode="change", interval=1
                 n += 1
             written.add(name)
             (out_dir / name).write_bytes(png)
-            log(f"  [{prefix}] slide {saved} at {fmt_time(t)}")
+            if verbose:
+                log(f"  [{prefix}] slide {saved} at {fmt_time(t)}")
 
         wait = period - (time.monotonic() - tick)
         if wait > 0:
@@ -868,7 +869,7 @@ def main():
     parser.add_argument("--overwrite", action="store_true", help="Redo sessions that are already done")
     parser.add_argument("--headless", action="store_true", help="Hide the browser (after you have logged in)")
     parser.add_argument("--verbose", action="store_true",
-                        help="Print a progress line (video time, speed, resolution) every 30 s")
+                        help="Print each saved slide and a progress line (video time, speed, resolution) every 30 s")
     parser.add_argument("--retry", metavar="WAIT",
                         help="If sessions are left unfinished, wait this long (e.g. 30m, 1h) and run "
                              "again; stops when all are done, a round finishes none, or after --max-rounds")

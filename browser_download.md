@@ -52,6 +52,10 @@ python browser_download.py --only S003 --workers 1 --verbose
    it at 2× and takes screenshots. Leave the window alone until you see
    `[S003] DONE: …`.
 
+Without `--verbose` the terminal shows one line per session (`[S003] DONE: …`).
+With `--verbose` it also prints every saved slide (`[S003] slide 12 at
+00h05m36s`) and a progress line every 30 s (video time, speed, resolution).
+
 The login is stored in `~/.aacr26_firefox_profile`, so later runs (including
 `--headless`) reuse it.
 
