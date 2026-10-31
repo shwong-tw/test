@@ -28,12 +28,18 @@ After writing, the output is checked against the transcript (re-scanned
 independently): every caption line must appear once, in order. Problems are
 listed and the script exits with status 1.
 
+--start / --end (e.g. 01h00m00s) restrict the work to a time window: only
+cues starting in [start, end) and the slide intervals inside it. Blocks keep
+the numbers they have in a full run, so outputs can be compared.
+
 Usage:
     python VTT_merge.py S001.txt S001_Interval.txt
+    python VTT_merge.py S001.txt S001_Interval.txt --start 01h00m00s --end 01h30m00s
     python VTT_merge.py S001.txt output/slides/S001 --time -o S001_slides.txt
 """
 
 import argparse
+import bisect
 import re
 import sys
 from pathlib import Path
@@ -120,21 +126,51 @@ def assign(cues, intervals):
     return result
 
 
-def merge(cues, times, show_time=False):
-    end = max((c[1] for c in cues), default=0.0)
-    intervals = slide_intervals(times, end)
+def parse_hms(text):
+    """'01h00m00s' (also '1h30m', '45m', '90s') or '01:00:00' / '30:00' -> seconds."""
+    t = text.strip().lower()
+    if ":" in t:
+        return vtt_seconds(t)
+    parts = re.findall(r"(\d+(?:\.\d+)?)\s*([hms])", t)
+    if not parts or "".join(n + u for n, u in parts) != t.replace(" ", ""):
+        raise argparse.ArgumentTypeError(f"invalid time '{text}' (use e.g. 01h00m00s or 01:00:00)")
+    return sum(float(n) * {"h": 3600, "m": 60, "s": 1}[u] for n, u in parts)
+
+
+def in_window(t, start, end):
+    return t >= start and (end is None or t < end)
+
+
+def merge(cues, times, show_time=False, start=0.0, end=None):
+    """
+    Merged text, one block per slide interval. With `start`/`end`, only cues
+    starting in [start, end) and the slide intervals inside that window are
+    included; blocks keep the numbers they have in a full run.
+    """
+    vtt_end = max((c[1] for c in cues), default=0.0)
+    full = slide_intervals(times, vtt_end)
+    full_starts = [a for a, _ in full]
+    if start <= 0 and end is None:
+        intervals = full
+    else:
+        bounds = [start] + [float(t) for t in times if start < t and (end is None or t < end)]
+        last = end if end is not None else max(vtt_end, bounds[-1])
+        intervals = list(zip(bounds, bounds[1:] + [last]))
+    numbers = [bisect.bisect_right(full_starts, a) for a, _ in intervals]   # 1-based
+
+    cues = [c for c in cues if in_window(c[0], start, end)]
     texts = [[] for _ in intervals]
     for cue, idx in zip(cues, assign(cues, intervals)):
         texts[idx].extend(cue[2])
-    width = max(2, len(str(len(intervals))))
+    width = max(2, len(str(len(full))))
     blocks = []
-    for n, ((a, b), lines) in enumerate(zip(intervals, texts), 1):
+    for n, (a, b), lines in zip(numbers, intervals, texts):
         block = [f"{n:0{width}d}"]
         if show_time:
             block.append(f"{fmt_hms(a)} --> {fmt_hms(b)}")
         block += lines
         blocks.append("\n".join(block))
-    return "\n\n".join(blocks) + "\n"
+    return "\n\n".join(blocks) + "\n", len(intervals), len(cues)
 
 
 LOOSE_TIMING_RE = re.compile(r"\d+:\d+\S*\s*-+>|-->")
@@ -188,10 +224,11 @@ def output_text_lines(path):
     return lines
 
 
-def check_merged(vtt_path, out_path, parsed_cues):
+def check_merged(vtt_path, out_path, parsed_cues, start=0.0, end=None):
     """
-    Compare the merged file with the original transcript. Returns a list of
-    problems (empty if every caption line is present once, in order).
+    Compare the merged file with the original transcript (only cues starting
+    in [start, end)). Returns a list of problems (empty if every caption line
+    is present once, in order).
     """
     from collections import Counter
     problems = []
@@ -201,7 +238,8 @@ def check_merged(vtt_path, out_path, parsed_cues):
     for _, text in expected:
         if text.startswith("(unreadable timing line: "):
             problems.append(f"unreadable timing line, cue skipped: {text[25:-1]}")
-    expected = [(t, text) for t, text in expected if not text.startswith("(unreadable timing line: ")]
+    expected = [(t, text) for t, text in expected if not text.startswith("(unreadable timing line: ")
+                and (t is None or in_window(t, start, end))]
     got = output_text_lines(out_path)
     want = [text for _, text in expected]
     missing = Counter(want) - Counter(got)
@@ -225,17 +263,28 @@ def main():
     parser.add_argument("slides", help="Slide time list (e.g. S001_Interval.txt) or screenshot folder")
     parser.add_argument("-o", "--output", help="Output file (default: <transcript name>_merged.txt)")
     parser.add_argument("--time", action="store_true", help="Print each slide interval's time range")
+    parser.add_argument("--start", type=parse_hms, default=0.0, metavar="01h00m00s",
+                        help="Only process captions/slides from this time on")
+    parser.add_argument("--end", type=parse_hms, metavar="01h30m00s",
+                        help="Only process captions/slides before this time")
     args = parser.parse_args()
+    if args.end is not None and args.end <= args.start:
+        parser.error("--end must be later than --start")
 
     cues = read_vtt(args.vtt)
     if not cues:
         sys.exit(f"{args.vtt}: no caption cues found")
     times = read_slide_times(args.slides)
     out = Path(args.output) if args.output else Path(args.vtt).with_name(Path(args.vtt).stem + "_merged.txt")
-    out.write_text(merge(cues, times, args.time), encoding="utf-8")
-    print(f"{out}: {len(cues)} cues -> {len(slide_intervals(times, max(c[1] for c in cues)))} slide intervals")
+    text, n_intervals, n_cues = merge(cues, times, args.time, args.start, args.end)
+    out.write_text(text, encoding="utf-8")
+    window = ""
+    if args.start > 0 or args.end is not None:
+        window = (f" (window {fmt_hms(args.start)} - "
+                  f"{fmt_hms(args.end) if args.end is not None else 'end'})")
+    print(f"{out}: {n_cues} cues -> {n_intervals} slide intervals{window}")
 
-    problems = check_merged(args.vtt, out, cues)
+    problems = check_merged(args.vtt, out, cues, args.start, args.end)
     if problems:
         print(f"Check FAILED: {len(problems)} problem(s)")
         for p in problems[:50]:
