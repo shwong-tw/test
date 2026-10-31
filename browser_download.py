@@ -28,6 +28,7 @@ Usage:
     python browser_download.py --workers 3                 # everything
     python browser_download.py --no-screenshots            # captions only
     python browser_download.py --dry-run                   # list what would run
+    python browser_download.py --retry 30m                 # rerun unfinished ones every 30 min
 
 Session pool: if session_ids.txt exists (or --pool FILE), only the IDs in it
 are processed, e.g. "S001 S005 S010-S020" (spaces, commas or new lines;
@@ -144,6 +145,17 @@ def is_done(outdir, sid, want_captions, want_slides):
 def parse_size(text):
     w, h = text.lower().split("x")
     return int(w), int(h)
+
+
+def parse_duration(text):
+    """'30m', '90s', '1h', '1h30m' or plain minutes ('30') -> seconds."""
+    text = text.strip().lower()
+    if re.fullmatch(r"\d+(\.\d+)?", text):
+        return float(text) * 60
+    parts = re.findall(r"(\d+(?:\.\d+)?)\s*([hms])", text)
+    if not parts or "".join(n + u for n, u in parts) != text.replace(" ", ""):
+        raise argparse.ArgumentTypeError(f"invalid duration '{text}' (use e.g. 30m, 90s, 1h30m)")
+    return sum(float(n) * {"h": 3600, "m": 60, "s": 1}[u] for n, u in parts)
 
 
 def fmt_time(seconds):
@@ -857,8 +869,17 @@ def main():
     parser.add_argument("--headless", action="store_true", help="Hide the browser (after you have logged in)")
     parser.add_argument("--verbose", action="store_true",
                         help="Print a progress line (video time, speed, resolution) every 30 s")
+    parser.add_argument("--retry", metavar="WAIT",
+                        help="If sessions are left unfinished, wait this long (e.g. 30m, 1h) and run "
+                             "again; stops when all are done, a round finishes none, or after --max-rounds")
+    parser.add_argument("--max-rounds", type=int, default=10, help="Maximum rounds with --retry (default 10)")
     parser.add_argument("--dry-run", action="store_true", help="List the sessions that would be processed")
     args = parser.parse_args()
+    if args.retry:
+        try:
+            parse_duration(args.retry)    # fail early on a bad value
+        except argparse.ArgumentTypeError as e:
+            parser.error(str(e))
 
     pool = None
     if Path(args.pool).exists():
@@ -867,8 +888,12 @@ def main():
     elif args.pool != DEFAULT_POOL:
         sys.exit(f"Pool file not found: {args.pool}")
     rows = read_sessions(args.input, args.only, args.start, pool)
-    todo = [r for r in rows if args.overwrite or not is_done(
-        args.outdir, r["ID"], not args.no_captions, not args.no_screenshots)]
+
+    def pending():
+        return [r for r in rows if args.overwrite or not is_done(
+            args.outdir, r["ID"], not args.no_captions, not args.no_screenshots)]
+
+    todo = pending()
     print(f"{len(rows)} sessions selected, {len(rows) - len(todo)} already done, {len(todo)} to process")
 
     if args.dry_run:
@@ -889,7 +914,35 @@ def main():
     except ImportError as e:
         sys.exit(f"Missing dependency ({e.name}). Run: pip install playwright pillow numpy && playwright install firefox")
 
-    results = asyncio.run(run(args, todo))
+    retry_wait = parse_duration(args.retry) if args.retry else None
+    rounds = args.max_rounds if retry_wait else 1
+    for rnd in range(1, rounds + 1):
+        if rnd > 1:
+            print(f"\n=== Round {rnd}/{rounds} ({time.strftime('%H:%M')}): {len(todo)} session(s) left ===")
+        results = asyncio.run(run(args, todo))
+        report_round(args, results)
+        args.overwrite = False            # later rounds only redo what is unfinished
+        left = pending()
+        if not left:
+            if retry_wait:
+                print("All selected sessions are done.")
+            break
+        if not retry_wait:
+            break
+        if len(left) >= len(todo):
+            print(f"No session finished in round {rnd}; stopping instead of retrying "
+                  "(the site may be blocking automated access).")
+            break
+        if rnd == rounds:
+            print(f"Reached --max-rounds {rounds}; {len(left)} session(s) still unfinished.")
+            break
+        resume = time.strftime("%H:%M", time.localtime(time.time() + retry_wait))
+        print(f"{len(left)} session(s) unfinished; retrying in {args.retry} (at {resume}). Ctrl+C to stop.")
+        time.sleep(retry_wait)
+        todo = left
+
+
+def report_round(args, results):
     ok_cap = sum(r["Caption"] == "OK" for r in results)
     ok_sl = sum(r["Slides"].startswith("DONE") for r in results)
     print(f"\nFinished {len(results)} sessions: captions OK {ok_cap}, slides done {ok_sl}. "
