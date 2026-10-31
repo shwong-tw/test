@@ -24,6 +24,10 @@ tie it goes to the earlier interval. The cues' text is merged per interval:
 Intervals without speech are kept (empty text), so the numbers always match
 the slide intervals.
 
+After writing, the output is checked against the transcript (re-scanned
+independently): every caption line must appear once, in order. Problems are
+listed and the script exits with status 1.
+
 Usage:
     python VTT_merge.py S001.txt S001_Interval.txt
     python VTT_merge.py S001.txt output/slides/S001 --time -o S001_slides.txt
@@ -133,6 +137,87 @@ def merge(cues, times, show_time=False):
     return "\n\n".join(blocks) + "\n"
 
 
+LOOSE_TIMING_RE = re.compile(r"\d+:\d+\S*\s*-+>|-->")
+
+
+def raw_caption_lines(path):
+    """
+    Independent re-scan of the WEBVTT file for the check. Every non-empty
+    line counts as caption text except the WEBVTT header, NOTE/STYLE/REGION
+    blocks, cue numbers and timing lines -- so text is counted even when its
+    timing line is broken and the cue could not be read.
+    Returns (number of timing lines, [(cue start or None, text line)]).
+    """
+    text = Path(path).read_text(encoding="utf-8-sig").replace("\r\n", "\n").replace("\r", "\n")
+    timings, lines = 0, []
+    for block in re.split(r"\n\s*\n", text):
+        rows = [r.strip() for r in block.split("\n") if r.strip()]
+        if not rows or re.match(r"(WEBVTT|NOTE|STYLE|REGION)\b", rows[0]):
+            continue
+        start = None
+        for i, row in enumerate(rows):
+            if LOOSE_TIMING_RE.search(row):
+                timings += 1
+                m = CUE_TIME_RE.match(row)
+                if m:
+                    start = vtt_seconds(m.group(1))
+                else:
+                    lines.append((None, f"(unreadable timing line: {row})"))
+                rows = rows[i + 1:]
+                break
+        else:
+            if re.fullmatch(r"\d+", rows[0]) and len(rows) > 1:
+                rows = rows[1:]       # cue number of a cue whose timing is missing
+        for row in rows:
+            row = TAG_RE.sub("", row).strip()
+            if row:
+                lines.append((start, row))
+    return timings, lines
+
+
+def output_text_lines(path):
+    """Text lines of a merged file (block numbers and time ranges removed)."""
+    lines = []
+    for block in Path(path).read_text(encoding="utf-8").split("\n\n"):
+        rows = [r for r in block.split("\n") if r.strip()]
+        if rows and re.fullmatch(r"\d+", rows[0].strip()):
+            rows = rows[1:]
+        if rows and re.fullmatch(r"\d{2}:\d{2}:\d{2} --> \d{2}:\d{2}:\d{2}", rows[0].strip()):
+            rows = rows[1:]
+        lines += [r.strip() for r in rows]
+    return lines
+
+
+def check_merged(vtt_path, out_path, parsed_cues):
+    """
+    Compare the merged file with the original transcript. Returns a list of
+    problems (empty if every caption line is present once, in order).
+    """
+    from collections import Counter
+    problems = []
+    timings, expected = raw_caption_lines(vtt_path)
+    if timings != len(parsed_cues):
+        problems.append(f"{timings} timing lines in the transcript but {len(parsed_cues)} cues were read")
+    for _, text in expected:
+        if text.startswith("(unreadable timing line: "):
+            problems.append(f"unreadable timing line, cue skipped: {text[25:-1]}")
+    expected = [(t, text) for t, text in expected if not text.startswith("(unreadable timing line: ")]
+    got = output_text_lines(out_path)
+    want = [text for _, text in expected]
+    missing = Counter(want) - Counter(got)
+    extra = Counter(got) - Counter(want)
+    for start, text in expected:
+        if missing[text] > 0:
+            missing[text] -= 1
+            when = fmt_hms(start) if start is not None else "?"
+            problems.append(f"missing line (cue at {when}): {text}")
+    for text, n in extra.items():
+        problems.append(f"line not in the transcript{f' (x{n})' if n > 1 else ''}: {text}")
+    if not problems and got != want:
+        problems.append("all lines are present but their order differs from the transcript")
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -149,6 +234,17 @@ def main():
     out = Path(args.output) if args.output else Path(args.vtt).with_name(Path(args.vtt).stem + "_merged.txt")
     out.write_text(merge(cues, times, args.time), encoding="utf-8")
     print(f"{out}: {len(cues)} cues -> {len(slide_intervals(times, max(c[1] for c in cues)))} slide intervals")
+
+    problems = check_merged(args.vtt, out, cues)
+    if problems:
+        print(f"Check FAILED: {len(problems)} problem(s)")
+        for p in problems[:50]:
+            print(f"  - {p}")
+        if len(problems) > 50:
+            print(f"  ... and {len(problems) - 50} more")
+        sys.exit(1)
+    n_lines = len(output_text_lines(out))
+    print(f"Check OK: all {n_lines} caption lines are in the output, once each, in order")
 
 
 if __name__ == "__main__":
