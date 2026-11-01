@@ -52,6 +52,12 @@ python browser_download.py --only S003 --workers 1 --verbose
    it at 2× and takes screenshots. Leave the window alone until you see
    `[S003] DONE: …`.
 
+What you will see in the window for each session: the page loads once, the
+Transcript panel opens and closes (captions saved), the video is stretched to
+fill the window (two quick jumps), the player controls flash while playback is
+started, then the video plays muted at 2×. If playback needs a click, the
+script clicks the video itself.
+
 Without `--verbose` the terminal shows one line per session (`[S003] DONE: …`).
 With `--verbose` it also prints every saved slide (`[S003] slide 12 at
 00h05m36s`) and a progress line every 30 s (video time, speed, resolution).
@@ -95,6 +101,10 @@ S042
 python browser_download.py --pool Pool.txt --dry-run
 ```
 
+A `--pool` file that doesn't exist is an error; a missing `session_ids.txt`
+simply means "all sessions". The script prints how many IDs it read and warns
+about IDs that are not in `AACR2026_Session_URL.txt`.
+
 Already-finished sessions are skipped automatically, so you can stop (Ctrl+C) and
 rerun the same command at any time. The session that was interrupted starts over.
 
@@ -106,8 +116,11 @@ rerun the same command at any time. The session that was interrupted starts over
 python browser_download.py --pool Pool.txt --workers 3
 ```
 
-Each worker uses its own Firefox window and moves to the next unfinished session
-as soon as one is done. Keep the windows open and don't minimise them
+Each worker uses its own Firefox window. When a video ends, the worker marks
+the session done, adds a row to the log, waits 2 s and loads the next unfinished
+session **in the same window**. A failed session never pauses the run — the
+worker just moves on. When the list is used up, each window closes and a summary
+is printed. Keep the windows open and don't minimise them
 (minimised windows may stop playing video). If speed or resolution drops (check
 with `--verbose`), use fewer workers.
 
@@ -118,7 +131,7 @@ python browser_download.py --pool Pool.txt --workers 2 --headless
 ```
 
 With `--headless` nobody can see or answer a "verify you are human" check (see
-[Troubleshooting](#8-troubleshooting)).
+[Troubleshooting](#9-troubleshooting)).
 
 ---
 
@@ -202,10 +215,26 @@ output/
 └── download_log.tsv               # one row per processed session
 ```
 
-A session counts as finished (and is skipped next time) when its captions file
-exists **and** its slides folder has `.done`. `--overwrite` redoes finished
-sessions, but does not delete old screenshots first — delete the folder yourself
-if you want a clean result.
+### How "finished" is decided
+
+| Part | Done when this exists | Written when |
+|---|---|---|
+| Captions | `output/captions/Sxxx.txt` | the caption file was downloaded |
+| Slides | `output/slides/Sxxx/.done` | the video played **to the end** |
+
+- Both exist → the session is skipped (its page is not even opened).
+- One is missing → only the missing part is redone (e.g. captions exist but
+  slides were interrupted → only the video is captured again).
+- With `--no-captions` / `--no-screenshots` that part is ignored.
+- Interrupted (Ctrl+C), `STALLED`, `NO_PLAY`, `CLOUDFLARE`, errors → no `.done`,
+  so the slides are redone next time. `NO_CAPTION` → no captions file, retried
+  every run.
+- Only existence is checked, inside `--outdir`.
+
+To force a redo: delete the captions file and/or the slides folder, or use
+`--overwrite` with `--only`/`--pool`. Note that `--overwrite` (and an
+interrupted capture) does **not** delete old screenshots first — delete
+`output/slides/Sxxx/` yourself for a clean set.
 
 View the log:
 
@@ -228,7 +257,40 @@ At the end of a run the script prints the IDs that are not complete, ready for
 
 ---
 
-## 8. Troubleshooting
+## 8. All options
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--input FILE` | `AACR2026_Session_URL.txt` | Session list (TSV with `ID`, `URL`) |
+| `--outdir DIR` | `output` | Output folder |
+| `--profile DIR` | `~/.aacr26_firefox_profile` | Firefox profile that keeps the login |
+| `--pool FILE` | `session_ids.txt` if present | Session IDs to work on |
+| `--only S… S…` | | Only these IDs (within the pool) |
+| `--start SXXX` | | From this ID on (within the pool) |
+| `--workers N` | `3` | Sessions in parallel, one window each |
+| `--no-captions` / `--no-screenshots` | | Skip that part |
+| `--mode change\|interval` | `change` | Screenshot on slide change / every `--interval` s |
+| `--interval S` | `10` | Seconds of video between shots (interval mode) |
+| `--threshold P` | `0.5` | % of pixels that must change for a new slide |
+| `--sample S` | `0.5` | Seconds of video between checked frames |
+| `--speed X` | `2` | Playback speed |
+| `--quality Q` | `720p` | Requested quality (`1080p`, `auto`, …) |
+| `--size WxH` | `1280x720` | Page size = screenshot size |
+| `--timeout S` | `30` | Seconds to wait for the video / captions to appear |
+| `--reload-after-captions` | | Reload the page instead of closing the transcript panel |
+| `--overwrite` | | Redo sessions that are already done |
+| `--headless` | | No visible windows (log in once without it first) |
+| `--verbose` | | Print each saved slide and a progress line every 30 s |
+| `--retry WAIT` | off | Wait and rerun unfinished sessions (`30m`, `1h`, …) |
+| `--max-rounds N` | `10` | Maximum rounds with `--retry` |
+| `--max-blocked N` | `2` | Stop the round after N verification blocks in a row |
+| `--dry-run` | | List what would be processed, then exit |
+
+Option names can be shortened as long as they stay unique (e.g. `--worker 2`).
+
+---
+
+## 9. Troubleshooting
 
 **"Verify you are human" / sessions fail with `CLOUDFLARE`**
 The script stops after 2 such sessions in a row (see section 5). The site has
@@ -255,17 +317,60 @@ Run once without `--headless`; the script asks you to log in again.
 
 ---
 
-## 9. Next step: transcript by slide
+## 10. Next step: transcript by slide (`VTT_merge.py`)
 
-`VTT_merge.py` regroups a session's captions by slide, using the screenshot
-times:
+`VTT_merge.py` regroups a session's captions by slide. Slide times come from the
+screenshot folder (`Sxxx_00h01m12s.png` names) or from a list file with one
+time per line (`Sxxx_Interval.txt`):
 
 ```bash
 python VTT_merge.py output/captions/S003.txt output/slides/S003 --time
+python VTT_merge.py S003.txt S003_Interval.txt -o S003_slides.txt
 ```
 
-This writes `output/captions/S003_merged.txt` and checks that every caption line
-made it into the output. For all sessions:
+Output (`<transcript>_merged.txt` by default):
+
+```
+001
+00:00:00 --> 00:00:01          <- only with --time
+Great. Welcome everybody.
+
+002
+00:00:01 --> 00:00:36
+This session is AACR, The
+Next Generation of Extracellular Vesicles
+...
+```
+
+How it works:
+
+- Slide times t1, t2, … give intervals `0–t1`, `t1–t2`, …, `tn–end of
+  transcript`, numbered `01`, `02`, … (3 digits when there are more than 99).
+- Each caption cue goes **whole** to the interval it overlaps most; on a tie, to
+  the earlier one. Text is never split or duplicated.
+- An interval with no speech keeps its number with empty text — this happens
+  when slide changes come faster than the cues (e.g. an animation detected as
+  many slides).
+
+Options:
+
+| Option | Meaning |
+|---|---|
+| `--time` | Print each interval's time range |
+| `-o FILE` | Output file |
+| `--start 01h00m00s` | Only cues starting at/after this time (and the slides from then on) |
+| `--end 01h30m00s` | Only cues starting before this time |
+
+`--start`/`--end` also accept `01:00:00`. Blocks keep the same numbers as in a
+full run, so a windowed output can be compared with the full one.
+
+**Built-in check.** After writing, the script re-reads the transcript
+independently and compares it with the output: every caption line must appear
+exactly once, in order (within `--start`/`--end` if given). It prints
+`Check OK: …` or `Check FAILED` with the missing / extra lines and unreadable
+timing lines, and exits with status 1 on failure.
+
+All sessions at once:
 
 ```bash
 for f in output/captions/S*.txt; do s=$(basename "$f" .txt); [ -d "output/slides/$s" ] && python VTT_merge.py "$f" "output/slides/$s" --time; done
@@ -282,4 +387,5 @@ python browser_download.py --pool Pool.txt --workers 2               # run the p
 python browser_download.py --pool Pool.txt --workers 2 --headless --retry 30m
 python browser_download.py --no-screenshots                          # captions only
 python browser_download.py --help                                    # all options
+python VTT_merge.py output/captions/S003.txt output/slides/S003 --time
 ```
