@@ -257,15 +257,29 @@ class SlideDetector:
 # Browser helpers
 # --------------------------------------------------------------------------
 
+BLOCK_PHRASES = ("verify you are human", "verifying you are human",
+                 "verify the security of your connection", "checking your browser")
+
+
 async def is_cloudflare_challenge(page):
-    """True if Cloudflare's "verify you are human" page is shown."""
+    """True if a human-verification page is shown (on the page or in any frame)."""
     try:
         title = (await page.title()).lower()
     except Exception:
         title = ""
     if "just a moment" in title or "attention required" in title:
         return True
-    return any("challenges.cloudflare.com" in (f.url or "") for f in page.frames)
+    if any("challenges.cloudflare.com" in (f.url or "") for f in page.frames):
+        return True
+    for frame in page.frames:
+        try:
+            text = (await frame.evaluate(
+                "() => document.body ? document.body.innerText.slice(0, 5000) : ''")).lower()
+        except Exception:
+            continue
+        if any(p in text for p in BLOCK_PHRASES):
+            return True
+    return False
 
 
 async def dismiss_cookie_banner(page):
@@ -692,13 +706,17 @@ async def process_session(page, row, args):
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(1500)
         if await is_cloudflare_challenge(page):
-            print(f"[{sid}] blocked by a Cloudflare check")
+            print(f"[{sid}] blocked by a human-verification check")
             result["Caption"] = result["Slides"] = "CLOUDFLARE"
             return result
         await dismiss_cookie_banner(page)
         frame = await find_video_frame(page, args.timeout)
         if frame is None:
-            result["Caption"] = result["Slides"] = "NO_VIDEO"
+            # e.g. the Vimeo player replaced by a verification page
+            status = "CLOUDFLARE" if await is_cloudflare_challenge(page) else "NO_VIDEO"
+            if status == "CLOUDFLARE":
+                print(f"[{sid}] blocked by a human-verification check")
+            result["Caption"] = result["Slides"] = status
             return result
 
         if want_captions:
@@ -788,8 +806,8 @@ async def ensure_logged_in(page, url):
         await page.goto(url, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(3000)
         if await is_cloudflare_challenge(page):
-            print("Cloudflare is blocking the automated browser on this site; stopping.")
-            return False
+            print("A human-verification check is blocking the automated browser.")
+            return "blocked"
         on_session = PLANNING_PATH in page.url
         has_login = await page.locator("input[type='password']").count() > 0
         if on_session and not has_login:
@@ -815,12 +833,17 @@ async def run(args, rows):
         try:
             # Reuse the window Firefox opens at start (instead of leaving it blank).
             first_page = context.pages[0] if context.pages else await context.new_page()
-            if not await ensure_logged_in(first_page, rows[0]["URL"]):
+            login = await ensure_logged_in(first_page, rows[0]["URL"])
+            if login == "blocked":
+                return results, True
+            if not login:
                 sys.exit("Not logged in; stopping.")
+
+            state = {"streak": 0, "blocked": False}
 
             async def worker(n):
                 page = first_page if n == 1 else await context.new_page()
-                while True:
+                while not state["blocked"]:
                     try:
                         row = queue.get_nowait()
                     except asyncio.QueueEmpty:
@@ -829,13 +852,24 @@ async def run(args, rows):
                     res = await process_session(page, row, args)
                     append_log(args.outdir, res)
                     results.append(res)
+                    # Stop starting new sessions after --max-blocked verification
+                    # blocks in a row (sessions already running may finish).
+                    if "CLOUDFLARE" in (res["Caption"], res["Slides"]):
+                        state["streak"] += 1
+                        if state["streak"] >= args.max_blocked and not state["blocked"]:
+                            state["blocked"] = True
+                            print(f"\n{state['streak']} sessions in a row hit a human-verification "
+                                  "check; not starting new sessions this round "
+                                  "(sessions already running will finish first).")
+                    else:
+                        state["streak"] = 0
                     await page.wait_for_timeout(2000)
                 await page.close()
 
             await asyncio.gather(*(worker(i + 1) for i in range(args.workers)))
+            return results, state["blocked"]
         finally:
             await context.close()
-    return results
 
 
 def main():
@@ -874,6 +908,9 @@ def main():
                         help="If sessions are left unfinished, wait this long (e.g. 30m, 1h) and run "
                              "again; stops when all are done, a round finishes none, or after --max-rounds")
     parser.add_argument("--max-rounds", type=int, default=10, help="Maximum rounds with --retry (default 10)")
+    parser.add_argument("--max-blocked", type=int, default=2,
+                        help="Stop the round after this many sessions in a row hit a human-verification "
+                             "check (then exit, or wait with --retry); default 2")
     parser.add_argument("--dry-run", action="store_true", help="List the sessions that would be processed")
     args = parser.parse_args()
     if args.retry:
@@ -920,7 +957,7 @@ def main():
     for rnd in range(1, rounds + 1):
         if rnd > 1:
             print(f"\n=== Round {rnd}/{rounds} ({time.strftime('%H:%M')}): {len(todo)} session(s) left ===")
-        results = asyncio.run(run(args, todo))
+        results, blocked = asyncio.run(run(args, todo))
         report_round(args, results)
         args.overwrite = False            # later rounds only redo what is unfinished
         left = pending()
@@ -929,8 +966,11 @@ def main():
                 print("All selected sessions are done.")
             break
         if not retry_wait:
+            if blocked:
+                print(f"Stopped because of human-verification checks; {len(left)} session(s) "
+                      "unfinished. Run again later (or use --retry WAIT).")
             break
-        if len(left) >= len(todo):
+        if not blocked and len(left) >= len(todo):
             print(f"No session finished in round {rnd}; stopping instead of retrying "
                   "(the site may be blocking automated access).")
             break

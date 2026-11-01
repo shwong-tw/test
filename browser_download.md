@@ -122,7 +122,18 @@ With `--headless` nobody can see or answer a "verify you are human" check (see
 
 ---
 
-## 5. Automatic retry
+## 5. Human-verification blocks and automatic retry
+
+### Stopping on verification checks
+
+If the site starts showing "verify you are human" (on the page or inside the
+Vimeo player), the affected sessions are logged as `CLOUDFLARE`. After
+**2 such sessions in a row** (`--max-blocked N` to change), the script stops
+starting new sessions. Sessions already running in other windows are allowed
+to finish; then the round ends. Without `--retry` the script exits and tells
+you how many sessions are left.
+
+### Automatic retry
 
 By default the script runs once. With `--retry`, it waits and runs the
 unfinished sessions again:
@@ -132,8 +143,11 @@ python browser_download.py --pool Pool.txt --workers 2 --headless --retry 30m
 ```
 
 - Wait time: `30m`, `90s`, `1h`, `1h30m`, or a plain number = minutes.
-- It stops when all sessions are done, when a round finishes **no** session (the
-  site is probably still blocking), or after `--max-rounds` (default 10).
+- A round attempts every unfinished session once (unless it is stopped early by
+  verification checks, see above); the wait happens between rounds.
+- It stops when all sessions are done, when a round finishes **no** session for
+  another reason, or after `--max-rounds` (default 10). A round stopped by
+  verification checks always waits and retries, up to `--max-rounds`.
 - `--overwrite` only applies to the first round.
 
 For long unattended runs:
@@ -217,7 +231,8 @@ At the end of a run the script prints the IDs that are not complete, ready for
 ## 8. Troubleshooting
 
 **"Verify you are human" / sessions fail with `CLOUDFLARE`**
-The site has decided it doesn't want this much automated access. The script does
+The script stops after 2 such sessions in a row (see section 5). The site has
+decided it doesn't want this much automated access. The script does
 not try to get around this. Options: wait and try later (`--retry`), run fewer
 sessions with `--workers 1` and without `--headless`, ask AACR whether
 recordings/transcripts are available to attendees, or save the remaining
