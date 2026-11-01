@@ -116,7 +116,10 @@ rerun the same command at any time. The session that was interrupted starts over
 python browser_download.py --pool Pool.txt --workers 3
 ```
 
-Each worker uses its own Firefox window. When a video ends, the worker marks
+Workers start one after another: worker 2 opens its window only after
+worker 1's first session has shown its video, worker 3 after two sessions have,
+and so on. So if the site is already blocking, it gets one page request at a
+time, not `--workers` at once. Each worker uses its own Firefox window. When a video ends, the worker marks
 the session done, adds a row to the log, waits 2 s and loads the next unfinished
 session **in the same window**. A failed session never pauses the run — the
 worker just moves on. When the list is used up, each window closes and a summary
@@ -139,9 +142,20 @@ With `--headless` nobody can see or answer a "verify you are human" check (see
 
 ### Stopping on verification checks
 
-If the site starts showing "verify you are human" (on the page or inside the
-Vimeo player), the affected sessions are logged as `CLOUDFLARE`. After
-**2 such sessions in a row** (`--max-blocked N` to change), the script stops
+A session counts as **blocked** when either:
+
+- `CLOUDFLARE`: a verification check is recognised. This means the page title is
+  "Just a moment…" or "Attention required", or a `challenges.cloudflare.com`
+  frame is present, or the page or any frame contains "verify you are human",
+  "verifying you are human", "verify the security of your connection" or
+  "checking your browser".
+- `NO_VIDEO`: the page never showed a video player within `--timeout` seconds.
+  Every session page has a video, so this usually means a check the text
+  matching didn't recognise. A screenshot and the frame list are saved as
+  `output/debug/Sxxx_no_video.png` / `.txt` so you can see what was shown.
+
+Blocks are counted in the order sessions finish, and any successful session
+resets the count. After **2 blocked sessions in a row** (`--max-blocked N` to change), the script stops
 starting new sessions. Sessions already running in other windows are allowed
 to finish; then the round ends. Without `--retry` the script exits and tells
 you how many sessions are left.
@@ -283,7 +297,7 @@ At the end of a run the script prints the IDs that are not complete, ready for
 | `--verbose` | | Print each saved slide and a progress line every 30 s |
 | `--retry WAIT` | off | Wait and rerun unfinished sessions (`30m`, `1h`, …) |
 | `--max-rounds N` | `10` | Maximum rounds with `--retry` |
-| `--max-blocked N` | `2` | Stop the round after N verification blocks in a row |
+| `--max-blocked N` | `2` | Stop the round after N blocked sessions (`CLOUDFLARE`/`NO_VIDEO`) in a row |
 | `--dry-run` | | List what would be processed, then exit |
 
 Option names can be shortened as long as they stay unique (e.g. `--worker 2`).

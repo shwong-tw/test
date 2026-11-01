@@ -686,7 +686,27 @@ async def caption_urls_from_config(frame):
 # Per-session work
 # --------------------------------------------------------------------------
 
-async def process_session(page, row, args):
+def looks_blocked(res):
+    """True if a session result looks like a human-verification block: the
+    check was recognised (CLOUDFLARE), or the page never showed the video
+    player (NO_VIDEO; every session page has one, so this is almost always a
+    check the text matching didn't recognise)."""
+    return any(v in ("CLOUDFLARE", "NO_VIDEO") for v in (res["Caption"], res["Slides"]))
+
+
+async def save_page_snapshot(page, outdir, sid):
+    """Save a screenshot and the frame list of a page where no video was found."""
+    d = Path(outdir) / "debug"
+    d.mkdir(parents=True, exist_ok=True)
+    try:
+        await page.screenshot(path=str(d / f"{sid}_no_video.png"))
+        lines = [f"Title: {await page.title()}", "Frames:"] + [f"  {f.url}" for f in page.frames]
+        (d / f"{sid}_no_video.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
+async def process_session(page, row, args, loaded=None):
     sid, url = row["ID"], row["URL"]
     result = {"ID": sid, "Caption": "", "Slides": "", "Duration": "",
               "Caption URL": "", "Title": row.get("Session Title", "")}
@@ -716,8 +736,14 @@ async def process_session(page, row, args):
             status = "CLOUDFLARE" if await is_cloudflare_challenge(page) else "NO_VIDEO"
             if status == "CLOUDFLARE":
                 print(f"[{sid}] blocked by a human-verification check")
+            else:
+                print(f"[{sid}] no video player on the page (possibly a verification check); "
+                      f"screenshot in {Path(args.outdir) / 'debug'}")
+                await save_page_snapshot(page, args.outdir, sid)
             result["Caption"] = result["Slides"] = status
             return result
+        if loaded:
+            loaded()
 
         if want_captions:
             clicked = False
@@ -839,9 +865,20 @@ async def run(args, rows):
             if not login:
                 sys.exit("Not logged in; stopping.")
 
-            state = {"streak": 0, "blocked": False}
+            state = {"streak": 0, "blocked": False, "loaded": 0}
+
+            def on_loaded():
+                state["loaded"] += 1
 
             async def worker(n):
+                # Ramp up: worker n starts once n-1 sessions have loaded their
+                # video, so a site that is already blocking gets one request
+                # at a time instead of --workers requests at once.
+                while (n > 1 and state["loaded"] < n - 1 and not state["blocked"]
+                       and not queue.empty()):
+                    await asyncio.sleep(1)
+                if state["blocked"] or queue.empty():
+                    return
                 page = first_page if n == 1 else await context.new_page()
                 while not state["blocked"]:
                     try:
@@ -849,17 +886,17 @@ async def run(args, rows):
                     except asyncio.QueueEmpty:
                         break
                     print(f"[{row['ID']}] worker {n}: {row['URL']}")
-                    res = await process_session(page, row, args)
+                    res = await process_session(page, row, args, loaded=on_loaded)
                     append_log(args.outdir, res)
                     results.append(res)
                     # Stop starting new sessions after --max-blocked verification
                     # blocks in a row (sessions already running may finish).
-                    if "CLOUDFLARE" in (res["Caption"], res["Slides"]):
+                    if looks_blocked(res):
                         state["streak"] += 1
                         if state["streak"] >= args.max_blocked and not state["blocked"]:
                             state["blocked"] = True
                             print(f"\n{state['streak']} sessions in a row hit a human-verification "
-                                  "check; not starting new sessions this round "
+                                  "check (or showed no video); not starting new sessions this round "
                                   "(sessions already running will finish first).")
                     else:
                         state["streak"] = 0
@@ -910,7 +947,7 @@ def main():
     parser.add_argument("--max-rounds", type=int, default=10, help="Maximum rounds with --retry (default 10)")
     parser.add_argument("--max-blocked", type=int, default=2,
                         help="Stop the round after this many sessions in a row hit a human-verification "
-                             "check (then exit, or wait with --retry); default 2")
+                             "check or show no video (then exit, or wait with --retry); default 2")
     parser.add_argument("--dry-run", action="store_true", help="List the sessions that would be processed")
     args = parser.parse_args()
     if args.retry:
