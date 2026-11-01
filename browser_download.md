@@ -116,16 +116,23 @@ rerun the same command at any time. The session that was interrupted starts over
 python browser_download.py --pool Pool.txt --workers 3
 ```
 
-Workers start one after another: worker 2 opens its window only after
-worker 1's first session has shown its video, worker 3 after two sessions have,
-and so on. So if the site is already blocking, it gets one page request at a
-time, not `--workers` at once. Each worker uses its own Firefox window. When a video ends, the worker marks
+Each worker uses its own Firefox window.
+
+**Workers start one after another.** Worker 2 opens its window only after
+worker 1's first session has shown its video. Worker 3 waits until two sessions
+have, and so on. So if the site is already blocking, it gets one page request
+at a time, not `--workers` at once, and the run can stop after the first two
+blocked sessions (section 5). If sessions fail before showing their video,
+the remaining workers never start.
+
+**After a video ends**, the worker marks
 the session done, adds a row to the log, waits 2 s and loads the next unfinished
 session **in the same window**. A failed session never pauses the run — the
 worker just moves on. When the list is used up, each window closes and a summary
 is printed. Keep the windows open and don't minimise them
 (minimised windows may stop playing video). If speed or resolution drops (check
-with `--verbose`), use fewer workers.
+with `--verbose`), use fewer workers. Many parallel sessions (e.g. `--workers 7`)
+also make verification checks more likely; 2–3 is a safer choice.
 
 After you have logged in once, you can hide the windows:
 
@@ -154,10 +161,17 @@ A session counts as **blocked** when either:
   matching didn't recognise. A screenshot and the frame list are saved as
   `output/debug/Sxxx_no_video.png` / `.txt` so you can see what was shown.
 
-Blocks are counted in the order sessions finish, and any successful session
-resets the count. After **2 blocked sessions in a row** (`--max-blocked N` to change), the script stops
-starting new sessions. Sessions already running in other windows are allowed
-to finish; then the round ends. Without `--retry` the script exits and tells
+Blocks are counted in the order sessions finish, and any session that gets
+past the check (shows its video) resets the count. After **2 blocked sessions
+in a row** (`--max-blocked N` to change), the script prints
+
+```
+2 sessions in a row hit a human-verification check (or showed no video); not starting new sessions this round (sessions already running will finish first).
+```
+
+and stops starting new sessions. Workers still waiting for their turn never
+open a window. Sessions already running in other windows are allowed to finish;
+then the round ends. Without `--retry` the script exits and tells
 you how many sessions are left.
 
 ### Automatic retry
@@ -226,6 +240,9 @@ output/
 │   ├── S003_00h00m36s.png
 │   ├── ...
 │   └── .done                      # marks the slides as complete
+├── debug/                         # only if a page showed no video
+│   ├── S005_no_video.png          #   screenshot of what was shown
+│   └── S005_no_video.txt          #   page title and frame URLs
 └── download_log.tsv               # one row per processed session
 ```
 
@@ -240,7 +257,7 @@ output/
 - One is missing → only the missing part is redone (e.g. captions exist but
   slides were interrupted → only the video is captured again).
 - With `--no-captions` / `--no-screenshots` that part is ignored.
-- Interrupted (Ctrl+C), `STALLED`, `NO_PLAY`, `CLOUDFLARE`, errors → no `.done`,
+- Interrupted (Ctrl+C), `STALLED`, `NO_PLAY`, `CLOUDFLARE`, `NO_VIDEO`, errors → no `.done`,
   so the slides are redone next time. `NO_CAPTION` → no captions file, retried
   every run.
 - Only existence is checked, inside `--outdir`.
@@ -259,11 +276,11 @@ cut -f1-4 output/download_log.tsv | column -t -s $'\t'
 | Status | Meaning |
 |---|---|
 | `OK` / `DONE:n` | Captions saved / video finished with *n* slides |
-| `NO_VIDEO` | No video on the page (no recording, or the page didn't load) |
+| `NO_VIDEO` | No video player on the page within `--timeout` — usually an unrecognised verification check; counts as blocked. See `output/debug/Sxxx_no_video.png` |
 | `NO_CAPTION` | Video found but no caption file |
 | `NO_PLAY` | Video wouldn't start — see `Sxxx_debug.txt` / `.png` in the slides folder |
 | `STALLED` | Video stopped progressing for 90 s; slides so far are kept |
-| `CLOUDFLARE` | A "verify you are human" page was shown |
+| `CLOUDFLARE` | A "verify you are human" check was recognised; counts as blocked |
 | `ERROR: …` | Unexpected error, with the message |
 
 At the end of a run the script prints the IDs that are not complete, ready for
@@ -306,13 +323,21 @@ Option names can be shortened as long as they stay unique (e.g. `--worker 2`).
 
 ## 9. Troubleshooting
 
-**"Verify you are human" / sessions fail with `CLOUDFLARE`**
-The script stops after 2 such sessions in a row (see section 5). The site has
+**"Verify you are human" / sessions fail with `CLOUDFLARE` or `NO_VIDEO`**
+The script stops after 2 such sessions in a row (see section 5). For
+`NO_VIDEO`, open `output/debug/Sxxx_no_video.png` to see what the page showed
+instead of the video. If it is a check with different wording, its phrase can
+be added to the recognised list. The site has
 decided it doesn't want this much automated access. The script does
 not try to get around this. Options: wait and try later (`--retry`), run fewer
 sessions with `--workers 1` and without `--headless`, ask AACR whether
 recordings/transcripts are available to attendees, or save the remaining
 captions by hand (DevTools → Network → filter "caption" → click Transcript).
+
+**The run didn't stop although many sessions failed**
+Look at the statuses in `download_log.tsv`. Only `CLOUDFLARE` and `NO_VIDEO`
+count as blocked; `NO_CAPTION`, `NO_PLAY`, `STALLED` and errors don't (the page
+did show its video). Any session that shows its video resets the count.
 
 **Video stays black or never starts**
 Install codecs: `sudo apt install ffmpeg`. If it still fails, look at
