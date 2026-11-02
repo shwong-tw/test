@@ -413,9 +413,82 @@ async def capture(context, args, out_dir, stats):
 # --screen: screenshots of a screen area (no browser)
 # --------------------------------------------------------------------------
 
-def open_screen():
-    import mss
-    return (getattr(mss, "MSS", None) or mss.mss)()   # mss >= 10 renamed the class
+SCREEN_BACKENDS = ["auto", "mss", "xgetimage", "xlib", "pillow"]
+
+
+class Screen:
+    """Screenshots of the X11 desktop, through the first backend that works.
+
+    mss 10.2's default backend (XShm/XCB) rejects the pixel format of many VNC
+    servers ("drawable's visual not found in screen's supported visuals"), so
+    other backends are tried in turn: mss XGetImage, mss Xlib (mss's older
+    backend; works over VNC), then Pillow's ImageGrab.
+    """
+
+    def __init__(self, backend="auto"):
+        order = ["mss", "xgetimage", "xlib", "pillow"] if backend == "auto" else [backend]
+        errors = []
+        for name in order:
+            try:
+                self._open(name)
+                self.grab_png({"left": 0, "top": 0, "width": 1, "height": 1})   # can it really grab?
+                self.name = name
+                return
+            except Exception as e:
+                errors.append(f"  {name}: {type(e).__name__}: {str(e).splitlines()[0] if str(e) else ''}")
+                self.close()
+        sys.exit("Could not take screenshots of this screen:\n" + "\n".join(errors) + "\n"
+                 f"DISPLAY={os.environ.get('DISPLAY', '(not set)')}. Run the script from a terminal inside the "
+                 "desktop you see (over VNC: a terminal in the VNC window).\n"
+                 "Other things to try: pip install \"mss<10\", or an Xorg (not Wayland) session.")
+
+    def _open(self, name):
+        self._sct = None
+        if name == "pillow":
+            from PIL import ImageGrab
+            full = ImageGrab.grab(xdisplay=os.environ.get("DISPLAY") or None)
+            w, h = full.size
+            self.monitors = [{"left": 0, "top": 0, "width": w, "height": h}] * 2
+            return
+        import mss
+        cls = getattr(mss, "MSS", None) or mss.mss        # mss >= 10 renamed the class
+        if name == "mss":
+            self._sct = cls()
+        else:
+            try:
+                self._sct = cls(backend=name)
+            except TypeError:                             # mss < 10.2: no backends; it is Xlib already
+                if name != "xlib":
+                    raise
+                self._sct = mss.mss()
+        self.monitors = self._sct.monitors
+
+    def grab_png(self, area):
+        if self._sct is None:
+            import io
+            from PIL import ImageGrab
+            box = (area["left"], area["top"], area["left"] + area["width"], area["top"] + area["height"])
+            img = ImageGrab.grab(bbox=box, xdisplay=os.environ.get("DISPLAY") or None)
+            buf = io.BytesIO()
+            img.convert("RGB").save(buf, format="PNG", compress_level=1)
+            return buf.getvalue()
+        import mss.tools
+        shot = self._sct.grab(area)
+        return mss.tools.to_png(shot.rgb, shot.size)
+
+    def close(self):
+        if getattr(self, "_sct", None) is not None:
+            try:
+                self._sct.close()
+            except Exception:
+                pass
+            self._sct = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
 
 
 def screen_area(sct, args):
@@ -438,14 +511,9 @@ def screen_area(sct, args):
     return {"left": m["left"], "top": m["top"], "width": m["width"], "height": m["height"]}
 
 
-def grab_png(sct, area):
-    import mss.tools
-    shot = sct.grab(area)
-    return mss.tools.to_png(shot.rgb, shot.size)
-
-
-def list_monitors():
-    with open_screen() as sct:
+def list_monitors(backend="auto"):
+    with Screen(backend) as sct:
+        print(f"Screenshot backend: {sct.name}")
         for i, m in enumerate(sct.monitors):
             what = "all monitors together" if i == 0 else f"monitor {i}"
             print(f"  --monitor {i}: {m['width']}x{m['height']} at ({m['left']},{m['top']})  {what}")
@@ -468,11 +536,13 @@ def capture_screen(args, out_dir):
     screen_warnings()
     stats = {"saved": 0, "start": None, "reason": "stopped"}
     try:
-        with open_screen() as sct:
+        with Screen(args.screen_backend) as sct:
+            if args.verbose or args.screen_backend != "auto":
+                print(f"Screenshot backend: {sct.name}")
             area = screen_area(sct, args)
             desc = f"screen area {area['width']}x{area['height']} at ({area['left']},{area['top']})"
             if args.test_shot:
-                png = grab_png(sct, area)
+                png = sct.grab_png(area)
                 path = out_dir / "test_shot.png"
                 path.write_bytes(png)
                 print(f"Saved {desc} to {path}. Open it and check it shows just the slides.")
@@ -495,7 +565,7 @@ def capture_screen(args, out_dir):
                 if args.duration and elapsed >= args.duration:
                     stats["reason"] = f"--duration {fmt_time(args.duration)} reached"
                     break
-                png = grab_png(sct, area)
+                png = sct.grab_png(area)
                 thumb = thumbnail(png)
                 if is_blank(thumb):
                     if not warned_blank and elapsed >= 5:
@@ -603,6 +673,9 @@ def main():
                      help="Capture a screen area instead of driving a browser")
     scr.add_argument("--monitor", type=int, default=1,
                      help="Monitor to capture (1 = first; 0 = all together). Default 1")
+    scr.add_argument("--screen-backend", choices=SCREEN_BACKENDS, default="auto",
+                     help="How screenshots are taken (default auto: the first that works; "
+                          "over VNC usually xlib)")
     scr.add_argument("--list-monitors", action="store_true", help="Print the monitors and exit")
     scr.add_argument("--test-shot", action="store_true",
                      help="Save one screenshot of the area as test_shot.png and exit")
@@ -624,7 +697,7 @@ def main():
         except ImportError as e:
             sys.exit(f"Missing dependency ({e.name}). Run: pip install mss pillow numpy")
         if args.list_monitors:
-            list_monitors()
+            list_monitors(args.screen_backend)
             return
         out_dir = Path(args.outdir) / args.prefix
         out_dir.mkdir(parents=True, exist_ok=True)

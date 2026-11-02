@@ -42,9 +42,9 @@ pip install mss
 echo $XDG_SESSION_TYPE
 ```
 
-`x11` is fine. If it says `wayland`, screenshots taken by scripts are usually
-black: log out, click the gear icon on the login screen and choose
-**"Ubuntu on Xorg"**.
+`x11` is fine, and so is an empty answer over VNC. If it says `wayland`,
+screenshots taken by scripts are usually black: log out, click the gear icon on
+the login screen and choose **"Ubuntu on Xorg"**.
 
 ---
 
@@ -171,6 +171,25 @@ meeting itself, so it doesn't know when it ends; `--idle 10m` stops it when the
 picture hasn't changed for 10 minutes (slides can stay up for a long time
 during discussion, so don't make it too short).
 
+### Over VNC
+
+Screen mode works on a desktop you reach through VNC:
+
+- Run the script in a terminal **inside** the VNC desktop, so it captures that
+  desktop (`echo $DISPLAY` shows e.g. `:1`).
+- Screenshots are taken with the first method that works on your display
+  (`Screenshot backend: …` is printed with `--verbose` and `--list-monitors`).
+  On VNC servers such as TigerVNC that is usually `xlib`: the newer default
+  method in mss 10.2 fails there with *"drawable's visual not found in screen's
+  supported visuals"*, and the script then switches automatically.
+  `--screen-backend xlib` (or `pillow`) forces a method.
+- With a **virtual** VNC desktop (TigerVNC/Xvnc, `vncserver :1`), the desktop
+  keeps running when you close the VNC viewer, so you can disconnect during a
+  long meeting; screenshots continue. With a VNC server that **mirrors the
+  physical screen** (x11vnc, the built-in desktop sharing), the real monitor
+  must stay on and unlocked.
+- Audio doesn't matter for slides; Zoom can stay muted.
+
 ---
 
 ## 4. Common variations
@@ -244,6 +263,7 @@ python zoom_slides.py "https://zoom.us/j/81234567890" --selector "#sharee-contai
 | `--monitor N` | `1` | `--screen`: monitor to capture (0 = all together) |
 | `--list-monitors` | | `--screen`: print monitors and their coordinates, then exit |
 | `--test-shot` | | `--screen`: save one `test_shot.png` of the area, then exit |
+| `--screen-backend B` | `auto` | `--screen`: how screenshots are taken: `auto` (first that works), `mss`, `xgetimage`, `xlib`, `pillow` |
 
 `URL`, `--selector`, `--profile`, `--size` and `--app-page` apply to browser mode only.
 
@@ -294,6 +314,16 @@ automatically; for other links, click it yourself.
 
 **"Automated bots aren't allowed to join this meeting"** — Zoom refuses the
 script's browser for this meeting. Join normally and use `--screen` (section 3).
+
+**`ScreenShotError: drawable's visual not found in screen's supported visuals`**
+— an older version of the script with mss 10.2 on a VNC display. Update the
+script (it now falls back to another method automatically), or add
+`--screen-backend xlib`.
+
+**"Could not take screenshots of this screen"** — every method failed; the
+message lists each one's error. Check `echo $DISPLAY` (run the script in a
+terminal inside the desktop you want to capture), or try
+`pip install "mss<10"`.
 
 **`--screen` images are black** — Wayland session (choose "Ubuntu on Xorg" at
 login), the area is wrong (`--list-monitors`, `--test-shot`), or the screen
