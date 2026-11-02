@@ -12,6 +12,9 @@ Sessions come from `AACR2026_Session_URL.txt` (columns `ID`, `Session Title`,
 `URL`, …). Everything runs from the terminal; the script opens and controls its
 own Firefox window(s).
 
+For slides from a **live Zoom meeting** joined in the browser, see
+[zoom_slides.md](zoom_slides.md) (same slide detection, in `slide_detect.py`).
+
 ---
 
 ## 1. One-time setup (Ubuntu)
