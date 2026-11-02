@@ -35,6 +35,7 @@ Usage:
 import argparse
 import asyncio
 import os
+import re
 import sys
 import threading
 import time
@@ -50,12 +51,39 @@ ENDED_PHRASES = ("meeting has been ended", "host has ended this meeting", "this 
                  "webinar has ended", "you have been removed", "the meeting has ended")
 REFIND_EVERY = 10         # seconds: look again for the largest canvas (share may start/stop)
 
-# Visible <canvas>/<video> elements in a frame, largest first:
-# [index, area, x, y, w, h, tag, share] where `share` means the element or a
-# parent has "share" in its id/class (Zoom's shared-screen container).
-CANDIDATES_JS = """() => {
+# Walk the document including open shadow roots (newer Zoom clients put the
+# video inside web components).
+WALK_JS = """
+function zsAll(root, out) {
+  root.querySelectorAll('*').forEach(el => {
+    if (el.tagName === 'CANVAS' || el.tagName === 'VIDEO') out.push(el);
+    if (el.shadowRoot) zsAll(el.shadowRoot, out);
+  });
+  return out;
+}
+function zsDesc(el) {
+  const cls = typeof el.className === 'string' ? el.className.trim() : '';
+  return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(/\\s+/).join('.') : '');
+}
+function zsShare(el) {
+  for (let e = el, n = 0; e && n < 10; n++) {
+    const cls = typeof e.className === 'string' ? e.className : '';
+    if (/share/i.test((e.id || '') + ' ' + cls + ' ' + e.tagName)) return true;
+    e = e.parentElement || (e.getRootNode && e.getRootNode().host) || null;
+  }
+  return false;
+}
+"""
+
+# Visible <canvas>/<video> elements in a frame, largest first, each tagged with
+# a data-zs attribute so it can be found again:
+# [id, area, x, y, w, h, tag, share] where `share` means the element or a
+# parent has "share" in its id/class/tag (Zoom's shared-screen container).
+CANDIDATES_JS = "() => {" + WALK_JS + """
   const out = [];
-  document.querySelectorAll('canvas, video').forEach((el, i) => {
+  const all = zsAll(document, []);
+  all.forEach(el => el.removeAttribute('data-zs'));
+  all.forEach((el, i) => {
     const r = el.getBoundingClientRect();
     const st = getComputedStyle(el);
     if (r.width < 160 || r.height < 90 || st.visibility === 'hidden' || st.display === 'none'
@@ -63,14 +91,46 @@ CANDIDATES_JS = """() => {
     const w = Math.min(r.right, innerWidth) - Math.max(r.left, 0);
     const h = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
     if (w <= 0 || h <= 0) return;
-    let share = false;
-    for (let e = el, n = 0; e && n < 8 && !share; e = e.parentElement, n++)
-      share = /share/i.test((e.id || '') + ' ' + (typeof e.className === 'string' ? e.className : ''));
-    out.push([i, w * h, Math.round(r.left), Math.round(r.top), Math.round(r.width),
-              Math.round(r.height), el.tagName.toLowerCase(), share]);
+    el.setAttribute('data-zs', String(i));
+    out.push([String(i), w * h, Math.round(r.left), Math.round(r.top), Math.round(r.width),
+              Math.round(r.height), el.tagName.toLowerCase(), zsShare(el)]);
   });
   return out.sort((a, b) => b[1] - a[1]);
 }"""
+
+# Every <canvas>/<video> (visible or not), for the debug file.
+DEBUG_JS = "() => {" + WALK_JS + """
+  return zsAll(document, []).map(el => {
+    const r = el.getBoundingClientRect();
+    const st = getComputedStyle(el);
+    return `${zsDesc(el)}  ${Math.round(r.width)}x${Math.round(r.height)} at (${Math.round(r.left)},${Math.round(r.top)})`
+      + `  display=${st.display} visibility=${st.visibility} opacity=${st.opacity}`
+      + (zsShare(el) ? '  [share]' : '') + (el.getRootNode() !== document ? '  [in shadow DOM]' : '');
+  });
+}"""
+
+EVAL_TIMEOUT = 3          # seconds; a busy or stuck frame must not block the loop
+ZOOM_PAGE_RE = re.compile(r"zoom\.(us|com)/(wc|j|w|s)/|app\.zoom\.(us|com)")
+
+
+async def evaluate(frame, js):
+    """frame.evaluate with a time limit (raises on timeout)."""
+    return await asyncio.wait_for(frame.evaluate(js), EVAL_TIMEOUT)
+
+
+def pick_page(context):
+    """The tab to watch: the meeting tab if there is one, else the newest tab.
+    ("Join from your browser" may open the meeting in a new tab.)"""
+    pages = [pg for pg in context.pages if not pg.is_closed()]
+    if not pages:
+        return None
+    for pg in reversed(pages):
+        if "/wc/" in (pg.url or ""):
+            return pg
+    for pg in reversed(pages):
+        if ZOOM_PAGE_RE.search(pg.url or ""):
+            return pg
+    return pages[-1]
 
 
 def parse_region(text):
@@ -86,13 +146,21 @@ def parse_region(text):
 class Target:
     """What to screenshot: a fixed region, a CSS selector, or the largest canvas/video."""
 
-    def __init__(self, page, selector=None, region=None):
-        self.page, self.selector, self.region = page, selector, region
+    def __init__(self, context, selector=None, region=None):
+        self.context, self.selector, self.region = context, selector, region
+        self.page = pick_page(context)
         self.locator, self.desc, self.key = None, "", None
         self.first_area, self.first_share = None, False
 
     async def find(self):
         """(Re)locate the element. Returns True if something can be captured."""
+        page = pick_page(self.context)
+        if page is not self.page and page is not None:
+            print(f"Watching tab: {page.url[:100]}")
+        self.page = page
+        if page is None:
+            self.locator = None
+            return False
         if self.region:
             r = self.region
             self.desc = f"region {r['width']}x{r['height']} at ({r['x']},{r['y']})"
@@ -102,14 +170,14 @@ class Target:
             try:
                 if self.selector:
                     loc = frame.locator(self.selector)
-                    if await loc.count():
-                        box = await loc.first.bounding_box()
+                    if await asyncio.wait_for(loc.count(), EVAL_TIMEOUT):
+                        box = await asyncio.wait_for(loc.first.bounding_box(), EVAL_TIMEOUT)
                         if box and box["width"] > 0 and box["height"] > 0:
                             best = (loc.first, f"'{self.selector}' {box['width']:.0f}x{box['height']:.0f}",
                                     (frame.url, self.selector))
                             break
                 else:
-                    for c in await frame.evaluate(CANDIDATES_JS):
+                    for c in await evaluate(frame, CANDIDATES_JS):
                         cands.append((frame, *c))
             except Exception:
                 continue              # frame navigating or detached
@@ -142,13 +210,37 @@ class Target:
         if self.first_area is None:
             self.first_area = area
         self.first_share = self.first_share or share
-        return (frame.locator("canvas, video").nth(i),
+        return (frame.locator(f'[data-zs="{i}"]'),
                 f"<{tag}> {w}x{h} at ({x},{y})" + (" (shared screen)" if share else ""),
                 (frame.url, i, w, h))
 
+    async def debug_dump(self, path):
+        """Write every tab, frame and canvas/video found, to see why nothing matched."""
+        lines = []
+        for n, pg in enumerate(self.context.pages, 1):
+            if pg.is_closed():
+                continue
+            mark = "  <- watched" if pg is self.page else ""
+            lines.append(f"Tab {n}: {pg.url}{mark}")
+            for frame in pg.frames:
+                lines.append(f"  frame: {frame.url}")
+                try:
+                    found = await evaluate(frame, DEBUG_JS)
+                    lines += [f"    {d}" for d in found] or ["    (no canvas/video)"]
+                except Exception as e:
+                    lines.append(f"    (could not inspect: {type(e).__name__})")
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        if self.page is not None and not self.page.is_closed():
+            try:
+                await self.page.screenshot(path=str(path.with_suffix(".png")), timeout=5000)
+            except Exception:
+                pass
+
     async def screenshot(self):
         if self.region:
-            return await self.page.screenshot(clip=self.region, type="png")
+            if self.page is None or self.page.is_closed():
+                return None
+            return await self.page.screenshot(clip=self.region, type="png", timeout=5000)
         if self.locator is None:
             return None
         return await self.locator.screenshot(type="png", timeout=5000, animations="disabled")
@@ -173,8 +265,8 @@ async def wait_for_enter(prompt):
 async def meeting_ended(page):
     for frame in page.frames:
         try:
-            text = (await frame.evaluate(
-                "() => document.body ? document.body.innerText.slice(0, 5000) : ''")).lower()
+            text = (await evaluate(
+                frame, "() => document.body ? document.body.innerText.slice(0, 5000) : ''")).lower()
         except Exception:
             continue
         if any(p in text for p in ENDED_PHRASES):
@@ -182,12 +274,15 @@ async def meeting_ended(page):
     return False
 
 
-async def capture(page, args, out_dir, stats):
-    target = Target(page, args.selector, args.region)
-    if not await target.find():
-        print("No shared screen (canvas/video) found yet; waiting for one ...")
-    else:
+async def capture(context, args, out_dir, stats):
+    target = Target(context, args.selector, args.region)
+    found = await target.find()
+    if found:
         print(f"Capturing {target.desc}. Saving to {out_dir}/  (Ctrl+C to stop)")
+    else:
+        print("No shared screen (canvas/video) found yet; waiting for one (Ctrl+C to stop) ...")
+    ever_found = found
+    debug_written = False
 
     detector = SlideDetector(threshold=args.threshold)
     start = stats["start"] = time.monotonic()
@@ -200,7 +295,7 @@ async def capture(page, args, out_dir, stats):
         if args.duration and elapsed >= args.duration:
             reason = f"--duration {fmt_time(args.duration)} reached"
             break
-        if page.is_closed():
+        if target.page is None or (target.page.is_closed() and pick_page(context) is None):
             reason = "window closed"
             break
 
@@ -208,7 +303,8 @@ async def capture(page, args, out_dir, stats):
         if not args.region and (target.locator is None or now - last_find >= REFIND_EVERY):
             old = target.key
             if await target.find() and target.key != old:
-                print(f"[{fmt_time(elapsed)}] now capturing {target.desc}")
+                print(f"[{fmt_time(elapsed)}] {'now capturing' if ever_found else 'found'} {target.desc}")
+                ever_found = True
             last_find = now
 
         png = None
@@ -218,13 +314,26 @@ async def capture(page, args, out_dir, stats):
             target.locator = None     # element gone (share stopped / layout changed)
         if png is None:
             missing_since = missing_since or now
-            if now - missing_since >= args.idle:
+            if ever_found and now - missing_since >= args.idle:
                 reason = f"no shared screen for {args.idle:g} s"
                 break
+            if not ever_found and now - last_status >= 30:
+                # Nothing found since the start: say so, and save what is on the page.
+                last_status = now
+                dbg = out_dir / "debug.txt"
+                await target.debug_dump(dbg)
+                if not debug_written:
+                    print(f"[{fmt_time(elapsed)}] still no shared screen. Is someone sharing, and is the "
+                          f"meeting in this Firefox window?\n  What the script sees is in {dbg} "
+                          f"(and debug.png). Workaround: rerun with --region X,Y,W,H.")
+                    debug_written = True
+                else:
+                    print(f"[{fmt_time(elapsed)}] still waiting for a shared screen ({dbg} updated)")
         else:
-            if missing_since and args.verbose:
+            if missing_since and stats["captured"] and args.verbose:
                 print(f"[{fmt_time(elapsed)}] shared screen back")
             missing_since = None
+            stats["captured"] = True
             if detector.feed(thumbnail(png)):
                 name = f"{args.prefix}_{fmt_time(elapsed)}"
                 dup = dup + 1 if name == last_name else 0
@@ -236,10 +345,11 @@ async def capture(page, args, out_dir, stats):
                 if args.verbose:
                     print(f"[{fmt_time(elapsed)}] slide {saved}: {path.name}")
 
-        if k % max(1, int(10 / args.sample)) == 0 and await meeting_ended(page):
+        if (k % max(1, int(10 / args.sample)) == 0 and target.page is not None
+                and not target.page.is_closed() and await meeting_ended(target.page)):
             reason = "the meeting has ended"
             break
-        if args.verbose and now - last_status >= 30:
+        if args.verbose and ever_found and now - last_status >= 30:
             print(f"[{fmt_time(elapsed)}] {saved} slides so far"
                   + ("" if missing_since is None else " (shared screen not visible)"))
             last_status = now
@@ -263,7 +373,7 @@ async def run(args):
         context = await p.firefox.launch_persistent_context(
             args.profile, headless=False, firefox_user_prefs=FIREFOX_PREFS,
             viewport={"width": args.size[0], "height": args.size[1]})
-        stats = {"saved": 0, "start": None, "reason": "stopped"}
+        stats = {"saved": 0, "start": None, "reason": "stopped", "captured": False}
         try:
             page = context.pages[0] if context.pages else await context.new_page()
             if args.url:
@@ -276,7 +386,7 @@ async def run(args):
                 print("Join the meeting in the Firefox window (\"Join from your browser\"),\n"
                       "make the shared screen large (View > Speaker), then come back here.")
                 await wait_for_enter("Press Enter to start capturing... ")
-            await capture(page, args, out_dir, stats)
+            await capture(context, args, out_dir, stats)
         except asyncio.CancelledError:
             stats["reason"] = "Ctrl+C"
         finally:

@@ -111,9 +111,11 @@ python zoom_slides.py
 ## 4. When it captures the wrong thing
 
 By default the script captures the largest visible `<canvas>`/`<video>` inside
-an element whose id or class contains "share" (Zoom's share area), or else the
-largest one on the page. It checks again every 10 s, so it picks up a share
-that starts later.
+an element whose id, class or tag contains "share" (Zoom's share area), or else
+the largest one on the page. It also looks inside Zoom's web components (shadow
+DOM) and in every tab of the window: if "Join from your browser" opens the
+meeting in a new tab, it prints `Watching tab: …` and follows it. It checks
+again every 10 s, so it picks up a share that starts later.
 
 **Capture a fixed rectangle of the window** (`x,y,width,height` in pixels of
 the page; the default page size is 1280×720):
@@ -167,6 +169,18 @@ recording starts, or the slides and text will be shifted.
 ---
 
 ## 7. Troubleshooting
+
+**"No shared screen (canvas/video) found yet; waiting for one ..."**
+The script keeps waiting (until Ctrl+C or `--duration`). After 30 s, and every
+30 s after that, it writes what it sees to `zoom_slides/<prefix>/debug.txt` and
+`debug.png`: every tab, frame and canvas/video with size and visibility.
+- Nobody is sharing yet, or you're still in the waiting room: just wait. Capture
+  starts by itself (`found <canvas> …`).
+- `debug.png` doesn't show the meeting: the meeting is in another window or
+  in the Zoom app. Join in the window the script opened.
+- `debug.txt` lists the slides' canvas but it was not picked (e.g. too small or
+  hidden): use `--selector` with its id/class, or `--region` (both always work).
+  Send `debug.txt` to have the automatic choice adjusted.
 
 **Black or empty screenshots** — the window was minimised or hidden behind
 another full-screen app on some desktops; keep it visible. Also try
