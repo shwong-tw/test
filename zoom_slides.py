@@ -133,6 +133,14 @@ def pick_page(context):
     return pages[-1]
 
 
+def browser_join_url(url):
+    """Rewrite a Zoom meeting link (https://<host>/j/<id>?pwd=...) to the
+    browser-client link (https://<host>/wc/join/<id>?pwd=...), which skips the
+    "open the Zoom app / join from your browser" page. Other links are kept."""
+    m = re.match(r"(https?://[^/]*zoom\.(?:us|com))/j/(\d+)(\?.*)?$", url or "")
+    return f"{m.group(1)}/wc/join/{m.group(2)}{m.group(3) or ''}" if m else url
+
+
 def parse_region(text):
     try:
         x, y, w, h = (int(v) for v in text.replace(" ", "").split(","))
@@ -383,8 +391,9 @@ async def run(args):
                 except Exception as e:
                     print(f"Could not open the link ({str(e).splitlines()[0]}); open it in the window yourself.")
             if not args.no_wait:
-                print("Join the meeting in the Firefox window (\"Join from your browser\"),\n"
-                      "make the shared screen large (View > Speaker), then come back here.")
+                print("Join the meeting in the Firefox window (if Zoom asks how to join, click\n"
+                      "\"Join from your browser\"; enter name/passcode), make the shared screen\n"
+                      "large (View > Speaker), then come back here.")
                 await wait_for_enter("Press Enter to start capturing... ")
             await capture(context, args, out_dir, stats)
         except asyncio.CancelledError:
@@ -407,6 +416,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("url", nargs="?", help="Meeting link (optional; you can also join in the window)")
+    parser.add_argument("--app-page", action="store_true",
+                        help="Open the link as given (with Zoom's app/browser chooser) instead of "
+                             "the browser-join page")
     parser.add_argument("--prefix", default=time.strftime("Z%Y%m%d_%H%M"),
                         help="Name for the folder and images (default Z<date>_<time>)")
     parser.add_argument("--outdir", default=DEFAULT_OUTDIR, help=f"Output folder (default {DEFAULT_OUTDIR})")
@@ -424,6 +436,8 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Print each saved slide and a status every 30 s")
     parser.add_argument("--no-wait", action="store_true", help="Start capturing right away (don't wait for Enter)")
     args = parser.parse_args()
+    if args.url and not args.app_page:
+        args.url = browser_join_url(args.url)
     if args.sample <= 0:
         parser.error("--sample must be positive")
     try:

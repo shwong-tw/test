@@ -31,12 +31,17 @@ playwright install firefox
 python zoom_slides.py "https://us02web.zoom.us/j/81234567890?pwd=abc123"
 ```
 
-Put the link in quotes (it contains `?`). A Firefox window opens on the link.
+Put the link in quotes (it contains `?`). A Firefox window opens. Meeting links
+like `…/j/98569677492?pwd=…` are opened as Zoom's browser-join page
+(`…/wc/join/98569677492?pwd=…`), so the "open the Zoom app / join from your
+browser" chooser is skipped. (`--app-page` opens the link as given.)
 
 **2. Join in that window by hand**, as in a normal browser:
 
-- Click **"Join from your browser"** (if you only see "Launch Meeting", click it
-  once and cancel the app dialog — the browser link then appears).
+- If Zoom still shows the chooser, click **"Join from your browser"** (if you
+  only see "Launch Meeting", click it once and cancel the app dialog — the
+  browser link then appears). The script never clicks anything in Zoom; until
+  you join, it just waits.
 - Enter your name and the passcode, and wait in the waiting room if there is one.
 - Audio and camera are optional; slides don't need them.
 - If the meeting requires a Zoom sign-in, sign in once. The profile
@@ -150,6 +155,7 @@ python zoom_slides.py "https://zoom.us/j/81234567890" --selector "#sharee-contai
 | `--idle S` | `60` | Stop when the shared screen has been gone this long |
 | `--verbose` | | Print each slide and a status every 30 s |
 | `--no-wait` | | Start capturing right away, without waiting for Enter |
+| `--app-page` | | Open the link as given (Zoom's app/browser chooser) instead of the browser-join page |
 
 ---
 
@@ -191,6 +197,10 @@ blank area was captured. Use `--verbose` to see which element is captured, then
 `--region` or `--selector`.
 
 **Stops during a break** — raise `--idle` (e.g. `--idle 900`).
+
+**Stuck on the "open Zoom app / join from browser" page** — the script waits
+there until you choose "Join from your browser". `/j/` links skip this page
+automatically; for other links, click it yourself.
 
 **"Join from your browser" doesn't appear** — click "Launch Meeting", cancel the
 dialog that tries to open the Zoom app, and the link appears at the bottom. Some
