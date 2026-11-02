@@ -1,11 +1,20 @@
 # zoom_slides.py — slides from a live Zoom meeting
 
-`zoom_slides.py` watches the shared screen of a Zoom meeting or webinar that
-you join **in the browser**, and saves one screenshot per slide. It uses the same
-slide-change detection as `browser_download.py` (`slide_detect.py`).
+`zoom_slides.py` watches the shared screen of a Zoom meeting or webinar and
+saves one screenshot per slide. It uses the same slide-change detection as
+`browser_download.py` (`slide_detect.py`). It has two modes:
 
-You join the meeting yourself; the script never clicks anything in Zoom. Only
-capture meetings whose host or organiser allows it.
+| Mode | How you join | What the script does |
+|---|---|---|
+| **Browser** (default, sections 2, 4, 5) | In the Firefox window the script opens | Finds Zoom's share canvas in the page |
+| **Screen** (`--screen`, section 3) | The normal way: your own browser or the Zoom app | Screenshots a screen area; no browser involved |
+
+Many meetings refuse the script's Firefox with **"automated bots aren't allowed
+to join this meeting"**. That is the host's/Zoom's choice and the script does not
+try to get around it — use `--screen` for those.
+
+You always join the meeting yourself; the script never clicks anything in Zoom.
+Only capture meetings whose host or organiser allows it.
 
 ---
 
@@ -20,6 +29,22 @@ pip install playwright pillow numpy
 ```bash
 playwright install firefox
 ```
+
+For `--screen` also:
+
+```bash
+pip install mss
+```
+
+`--screen` needs an **X11 session** on Linux. Check with:
+
+```bash
+echo $XDG_SESSION_TYPE
+```
+
+`x11` is fine. If it says `wayland`, screenshots taken by scripts are usually
+black: log out, click the gear icon on the login screen and choose
+**"Ubuntu on Xorg"**.
 
 ---
 
@@ -59,7 +84,7 @@ Capturing <canvas> 1280x640 at (0,40) (shared screen). Saving to zoom_slides/Z20
 
 "(shared screen)" means it found Zoom's share area. If what it names is clearly
 not the slides (e.g. a small webcam tile), press Ctrl+C and rerun with
-`--region` or `--selector` (section 4).
+`--region` or `--selector` (section 5).
 
 **5. Let it run.** Every second it checks the picture. Each new slide is saved as:
 
@@ -89,7 +114,66 @@ share stops.
 
 ---
 
-## 3. Common variations
+## 3. Screen mode (`--screen`): when the browser is refused
+
+Use this when Zoom says "automated bots aren't allowed to join this meeting",
+or whenever you prefer the Zoom app. No browser is started; the script only
+takes a screenshot of one area of your screen every second.
+
+**1. Join the meeting the normal way** — your own Firefox/Chrome, or the Zoom
+app. Put the Zoom window where it will stay, and make the shared slides large
+(View → Speaker, or full screen).
+
+**2. Find the area to capture.** See your monitors:
+
+```bash
+python zoom_slides.py --screen --list-monitors
+```
+
+```
+  --monitor 0: 3840x1080 at (0,0)  all monitors together
+  --monitor 1: 1920x1080 at (0,0)  monitor 1
+  --monitor 2: 1920x1080 at (1920,0)  monitor 2
+```
+
+Either capture a whole monitor (`--monitor 2`), or a rectangle in the same
+pixel coordinates with `--region X,Y,WIDTH,HEIGHT`. A rectangle around just the
+slides works best (no taskbar, clock or chat). To read coordinates, take a
+screenshot with the Screenshot tool (or `gnome-screenshot -a`) and note the
+corners, or start with a whole monitor and narrow down.
+
+**3. Check the area with a test shot** (saves one image and exits):
+
+```bash
+python zoom_slides.py --screen --region 0,80,1920,960 --test-shot --prefix Keynote
+```
+
+Open `zoom_slides/Keynote/test_shot.png`: it should show the slides and little
+else. Black means the wrong area or a Wayland session (see Setup).
+
+**4. Start capturing:**
+
+```bash
+python zoom_slides.py --screen --region 0,80,1920,960 --prefix Keynote --verbose
+```
+
+Press Enter when the slides are showing. Slides are saved as
+`zoom_slides/Keynote/Keynote_00h01m12s.png`, as in browser mode.
+
+**5. Keep the area uncovered.** The script captures exactly what is on screen
+there: another window, a notification or the screen saver ends up in the
+images. Turn off the screen lock/blanking for long meetings
+(Settings → Power → Screen Blank: Never). If the area turns black, the script
+prints a warning.
+
+**6. Stopping:** Ctrl+C, or `--duration 1h30m`. The script can't see the
+meeting itself, so it doesn't know when it ends; `--idle 10m` stops it when the
+picture hasn't changed for 10 minutes (slides can stay up for a long time
+during discussion, so don't make it too short).
+
+---
+
+## 4. Common variations
 
 ```bash
 # Name the output yourself and stop after 90 minutes
@@ -113,7 +197,7 @@ python zoom_slides.py
 
 ---
 
-## 4. When it captures the wrong thing
+## 5. When it captures the wrong thing
 
 By default the script captures the largest visible `<canvas>`/`<video>` inside
 an element whose id, class or tag contains "share" (Zoom's share area), or else
@@ -138,7 +222,7 @@ python zoom_slides.py "https://zoom.us/j/81234567890" --selector "#sharee-contai
 
 ---
 
-## 5. All options
+## 6. All options
 
 | Option | Default | What it does |
 |---|---|---|
@@ -149,17 +233,23 @@ python zoom_slides.py "https://zoom.us/j/81234567890" --selector "#sharee-contai
 | `--sample S` | `1` | Seconds between checked frames |
 | `--threshold P` | `0.5` | % of pixels that must change to count as a new slide |
 | `--selector CSS` | | Capture this element |
-| `--region X,Y,W,H` | | Capture this rectangle of the page |
+| `--region X,Y,W,H` | | Capture this rectangle of the page (with `--screen`: of the screen) |
 | `--size WxH` | `1280x720` | Page size; larger gives bigger screenshots |
 | `--duration T` | | Stop after `T` (`90m`, `1h30m`, …) |
-| `--idle S` | `60` | Stop when the shared screen has been gone this long |
+| `--idle T` | `60` s / never | Browser: stop when the shared screen has been gone this long. `--screen`: stop when the picture hasn't changed this long (off unless given). Seconds, or `10m` |
 | `--verbose` | | Print each slide and a status every 30 s |
 | `--no-wait` | | Start capturing right away, without waiting for Enter |
 | `--app-page` | | Open the link as given (Zoom's app/browser chooser) instead of the browser-join page |
+| `--screen` | | Screen mode: capture a screen area, no browser (section 3) |
+| `--monitor N` | `1` | `--screen`: monitor to capture (0 = all together) |
+| `--list-monitors` | | `--screen`: print monitors and their coordinates, then exit |
+| `--test-shot` | | `--screen`: save one `test_shot.png` of the area, then exit |
+
+`URL`, `--selector`, `--profile`, `--size` and `--app-page` apply to browser mode only.
 
 ---
 
-## 6. Afterwards: transcript by slide
+## 7. Afterwards: transcript by slide
 
 If you get a transcript (`.vtt`) of the same meeting, `VTT_merge.py` accepts the
 screenshot folder directly:
@@ -174,7 +264,7 @@ recording starts, or the slides and text will be shifted.
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 **"No shared screen (canvas/video) found yet; waiting for one ..."**
 The script keeps waiting (until Ctrl+C or `--duration`). After 30 s, and every
@@ -202,6 +292,16 @@ blank area was captured. Use `--verbose` to see which element is captured, then
 there until you choose "Join from your browser". `/j/` links skip this page
 automatically; for other links, click it yourself.
 
+**"Automated bots aren't allowed to join this meeting"** — Zoom refuses the
+script's browser for this meeting. Join normally and use `--screen` (section 3).
+
+**`--screen` images are black** — Wayland session (choose "Ubuntu on Xorg" at
+login), the area is wrong (`--list-monitors`, `--test-shot`), or the screen
+blanked/locked.
+
+**`--screen` saved a chat popup / notification as a slide** — capture a tighter
+`--region` around the slides, close the chat panel, and turn on Do Not Disturb.
+
 **"Join from your browser" doesn't appear** — click "Launch Meeting", cancel the
 dialog that tries to open the Zoom app, and the link appears at the bottom. Some
 meetings disable joining from the browser; then this script can't be used.
@@ -214,4 +314,7 @@ meetings disable joining from the browser; then this script can't be used.
 python zoom_slides.py "MEETING_LINK"                                 # join, press Enter, Ctrl+C to stop
 python zoom_slides.py "MEETING_LINK" --prefix Talk1 --duration 1h --verbose
 python zoom_slides.py "MEETING_LINK" --region 0,40,1280,640          # fixed area
+python zoom_slides.py --screen --list-monitors                       # screen mode: find the area
+python zoom_slides.py --screen --region 0,80,1920,960 --test-shot    # check it
+python zoom_slides.py --screen --region 0,80,1920,960 --prefix Talk1 # join yourself, Enter, Ctrl+C
 ```

@@ -21,15 +21,27 @@ with --selector CSS, or capture a fixed rectangle with --region X,Y,W,H.
 
 Only capture meetings whose host or organiser allows it.
 
+Screen mode (--screen): when Zoom refuses the automated browser ("automated
+bots aren't allowed to join"), join the normal way yourself -- in your own
+browser or the Zoom app -- and run with --screen. No browser is started; the
+script only takes screenshots of a screen area (--monitor N or --region
+X,Y,W,H in screen pixels) and keeps the new slides. Needs an X11 session on
+Linux (on Wayland screenshots are usually black): check with
+echo $XDG_SESSION_TYPE.
+
 Setup (once, same as browser_download.py):
     pip install playwright pillow numpy
     playwright install firefox
+    pip install mss                            # for --screen
 
 Usage:
     python zoom_slides.py https://zoom.us/j/81234567890?pwd=abc123
     python zoom_slides.py https://zoom.us/j/81234567890 --prefix Keynote --duration 1h30m
     python zoom_slides.py https://zoom.us/j/81234567890 --region 0,40,1280,640
     python zoom_slides.py                      # open an empty window, join yourself
+    python zoom_slides.py --screen --list-monitors
+    python zoom_slides.py --screen --region 0,80,1920,1000 --test-shot
+    python zoom_slides.py --screen --region 0,80,1920,1000 --prefix Keynote
 """
 
 import argparse
@@ -42,7 +54,7 @@ import time
 from pathlib import Path
 
 from browser_download import FIREFOX_PREFS, parse_duration, parse_size
-from slide_detect import SlideDetector, fmt_time, thumbnail
+from slide_detect import SlideDetector, fmt_time, is_blank, thumbnail
 
 DEFAULT_PROFILE = os.path.expanduser("~/.zoom_firefox_profile")
 DEFAULT_OUTDIR = "zoom_slides"
@@ -149,6 +161,38 @@ def parse_region(text):
     if w <= 0 or h <= 0:
         raise argparse.ArgumentTypeError("width and height must be positive")
     return {"x": x, "y": y, "width": w, "height": h}
+
+
+def parse_seconds(text):
+    """'60' (seconds), '90s', '10m', '1h30m' -> seconds."""
+    text = text.strip()
+    try:
+        return float(text)
+    except ValueError:
+        return parse_duration(text)
+
+
+class SlideSaver:
+    """Feed screenshots to the slide detector and save the kept ones as
+    <prefix>_00h01m12s.png (time = seconds since capture started)."""
+
+    def __init__(self, out_dir, prefix, threshold, verbose):
+        self.out_dir, self.prefix, self.verbose = out_dir, prefix, verbose
+        self.detector = SlideDetector(threshold=threshold)
+        self.saved, self.last_name, self.dup = 0, None, 0
+
+    def feed(self, png, elapsed, thumb=None):
+        if not self.detector.feed(thumbnail(png) if thumb is None else thumb):
+            return False
+        name = f"{self.prefix}_{fmt_time(elapsed)}"
+        self.dup = self.dup + 1 if name == self.last_name else 0
+        self.last_name = name
+        path = self.out_dir / (f"{name}_{self.dup}.png" if self.dup else f"{name}.png")
+        path.write_bytes(png)
+        self.saved += 1
+        if self.verbose:
+            print(f"[{fmt_time(elapsed)}] slide {self.saved}: {path.name}")
+        return True
 
 
 class Target:
@@ -291,10 +335,11 @@ async def capture(context, args, out_dir, stats):
         print("No shared screen (canvas/video) found yet; waiting for one (Ctrl+C to stop) ...")
     ever_found = found
     debug_written = False
+    idle = 60 if args.idle is None else args.idle
 
-    detector = SlideDetector(threshold=args.threshold)
+    saver = SlideSaver(out_dir, args.prefix, args.threshold, args.verbose)
     start = stats["start"] = time.monotonic()
-    k, saved, last_name, dup = 0, 0, None, 0
+    k = 0
     missing_since, last_find, last_status = None, start, start
     reason = "stopped"
     while True:
@@ -322,8 +367,8 @@ async def capture(context, args, out_dir, stats):
             target.locator = None     # element gone (share stopped / layout changed)
         if png is None:
             missing_since = missing_since or now
-            if ever_found and now - missing_since >= args.idle:
-                reason = f"no shared screen for {args.idle:g} s"
+            if ever_found and now - missing_since >= idle:
+                reason = f"no shared screen for {idle:g} s"
                 break
             if not ever_found and now - last_status >= 30:
                 # Nothing found since the start: say so, and save what is on the page.
@@ -342,23 +387,15 @@ async def capture(context, args, out_dir, stats):
                 print(f"[{fmt_time(elapsed)}] shared screen back")
             missing_since = None
             stats["captured"] = True
-            if detector.feed(thumbnail(png)):
-                name = f"{args.prefix}_{fmt_time(elapsed)}"
-                dup = dup + 1 if name == last_name else 0
-                last_name = name
-                path = out_dir / (f"{name}_{dup}.png" if dup else f"{name}.png")
-                path.write_bytes(png)
-                saved += 1
-                stats["saved"] = saved
-                if args.verbose:
-                    print(f"[{fmt_time(elapsed)}] slide {saved}: {path.name}")
+            if saver.feed(png, elapsed):
+                stats["saved"] = saver.saved
 
         if (k % max(1, int(10 / args.sample)) == 0 and target.page is not None
                 and not target.page.is_closed() and await meeting_ended(target.page)):
             reason = "the meeting has ended"
             break
         if args.verbose and ever_found and now - last_status >= 30:
-            print(f"[{fmt_time(elapsed)}] {saved} slides so far"
+            print(f"[{fmt_time(elapsed)}] {saver.saved} slides so far"
                   + ("" if missing_since is None else " (shared screen not visible)"))
             last_status = now
 
@@ -370,6 +407,130 @@ async def capture(context, args, out_dir, stats):
             delay = start + k * args.sample - time.monotonic()
         await asyncio.sleep(delay)
     stats["reason"] = reason
+
+
+# --------------------------------------------------------------------------
+# --screen: screenshots of a screen area (no browser)
+# --------------------------------------------------------------------------
+
+def open_screen():
+    import mss
+    return (getattr(mss, "MSS", None) or mss.mss)()   # mss >= 10 renamed the class
+
+
+def screen_area(sct, args):
+    """The area to grab, as mss expects it."""
+    mons = sct.monitors
+    if args.region:
+        r = args.region
+        area = {"left": r["x"], "top": r["y"], "width": r["width"], "height": r["height"]}
+        whole = mons[0]
+        if (area["left"] < whole["left"] or area["top"] < whole["top"]
+                or area["left"] + area["width"] > whole["left"] + whole["width"]
+                or area["top"] + area["height"] > whole["top"] + whole["height"]):
+            sys.exit(f"--region {r['x']},{r['y']},{r['width']},{r['height']} is outside the screen "
+                     f"({whole['width']}x{whole['height']} at ({whole['left']},{whole['top']})). "
+                     "See --list-monitors.")
+        return area
+    if not 0 <= args.monitor < len(mons):
+        sys.exit(f"--monitor {args.monitor} doesn't exist; see --list-monitors.")
+    m = mons[args.monitor]
+    return {"left": m["left"], "top": m["top"], "width": m["width"], "height": m["height"]}
+
+
+def grab_png(sct, area):
+    import mss.tools
+    shot = sct.grab(area)
+    return mss.tools.to_png(shot.rgb, shot.size)
+
+
+def list_monitors():
+    with open_screen() as sct:
+        for i, m in enumerate(sct.monitors):
+            what = "all monitors together" if i == 0 else f"monitor {i}"
+            print(f"  --monitor {i}: {m['width']}x{m['height']} at ({m['left']},{m['top']})  {what}")
+    print("--region X,Y,W,H uses the same pixel coordinates (0,0 = top-left of the whole desktop).")
+
+
+def screen_warnings():
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+        print("Note: this is a Wayland session; screenshots from scripts are usually black there.\n"
+              "  If the test shot is black, log out and choose \"Ubuntu on Xorg\" on the login screen.")
+
+
+def change_percent(a, b, pixel_delta=25):
+    import numpy as np
+    return 100.0 * (np.abs(a - b) > pixel_delta).mean()
+
+
+def capture_screen(args, out_dir):
+    """Take a screenshot of the area every --sample s and keep the new slides."""
+    screen_warnings()
+    stats = {"saved": 0, "start": None, "reason": "stopped"}
+    try:
+        with open_screen() as sct:
+            area = screen_area(sct, args)
+            desc = f"screen area {area['width']}x{area['height']} at ({area['left']},{area['top']})"
+            if args.test_shot:
+                png = grab_png(sct, area)
+                path = out_dir / "test_shot.png"
+                path.write_bytes(png)
+                print(f"Saved {desc} to {path}. Open it and check it shows just the slides.")
+                if is_blank(thumbnail(png)):
+                    print("It is black/empty: is the area right, and is this an X11 session?")
+                return None
+            if not args.no_wait:
+                print("Join the meeting the normal way (your own browser or the Zoom app), put the\n"
+                      f"shared slides in the {desc},\n"
+                      "and keep that area uncovered. Then come back here.")
+                input("Press Enter to start capturing... ")
+            print(f"Capturing {desc}. Saving to {out_dir}/  (Ctrl+C to stop)")
+            saver = SlideSaver(out_dir, args.prefix, args.threshold, args.verbose)
+            start = stats["start"] = time.monotonic()
+            k, last_status, warned_blank = 0, start, False
+            ref, last_change = None, start
+            while True:
+                now = time.monotonic()
+                elapsed = now - start
+                if args.duration and elapsed >= args.duration:
+                    stats["reason"] = f"--duration {fmt_time(args.duration)} reached"
+                    break
+                png = grab_png(sct, area)
+                thumb = thumbnail(png)
+                if is_blank(thumb):
+                    if not warned_blank and elapsed >= 5:
+                        print(f"[{fmt_time(elapsed)}] the area is black. Is the meeting window there and "
+                              "uncovered? (On Wayland, use an Xorg session.)")
+                        warned_blank = True
+                else:
+                    warned_blank = False
+                if saver.feed(png, elapsed, thumb):
+                    stats["saved"] = saver.saved
+                # --idle: stop when the picture hasn't changed for that long.
+                if ref is None or change_percent(thumb, ref) > args.threshold:
+                    ref, last_change = thumb, now
+                elif args.idle and now - last_change >= args.idle:
+                    stats["reason"] = f"screen unchanged for {fmt_time(args.idle)}"
+                    break
+                if args.verbose and now - last_status >= 30:
+                    print(f"[{fmt_time(elapsed)}] {saver.saved} slides so far")
+                    last_status = now
+                k += 1
+                delay = start + k * args.sample - time.monotonic()
+                if delay < 0:
+                    k = int((time.monotonic() - start) / args.sample) + 1
+                    delay = start + k * args.sample - time.monotonic()
+                time.sleep(delay)
+    except KeyboardInterrupt:
+        stats["reason"] = "Ctrl+C"
+    if stats["start"] is None:
+        if not args.test_shot:
+            print("\nStopped before capturing started.")
+        return None
+    elapsed = time.monotonic() - stats["start"]
+    (out_dir / DONE_MARKER).write_text("")
+    print(f"\nStopped ({stats['reason']}) after {fmt_time(elapsed)}: {stats['saved']} slides in {out_dir}/")
+    return stats["saved"]
 
 
 async def run(args):
@@ -428,18 +589,49 @@ def main():
     parser.add_argument("--threshold", type=float, default=0.5,
                         help="Slide-change sensitivity: %% of pixels that must change (default 0.5)")
     parser.add_argument("--selector", help="CSS selector of the element to capture")
-    parser.add_argument("--region", type=parse_region, help="Capture a fixed rectangle X,Y,WIDTH,HEIGHT")
+    parser.add_argument("--region", type=parse_region,
+                        help="Capture a fixed rectangle X,Y,WIDTH,HEIGHT (page pixels; with --screen, "
+                             "screen pixels)")
     parser.add_argument("--size", type=parse_size, default=(1280, 720), help="Page size (default 1280x720)")
     parser.add_argument("--duration", type=parse_duration, help="Stop after this long, e.g. 1h30m")
-    parser.add_argument("--idle", type=float, default=60,
-                        help="Stop when the shared screen has been gone this many seconds (default 60)")
+    parser.add_argument("--idle", type=parse_seconds,
+                        help="Browser mode: stop when the shared screen has been gone this long "
+                             "(default 60 s). --screen: stop when the picture hasn't changed for "
+                             "this long (default: never). Seconds, or e.g. 10m")
+    scr = parser.add_argument_group("screen mode (no browser; you join Zoom yourself)")
+    scr.add_argument("--screen", action="store_true",
+                     help="Capture a screen area instead of driving a browser")
+    scr.add_argument("--monitor", type=int, default=1,
+                     help="Monitor to capture (1 = first; 0 = all together). Default 1")
+    scr.add_argument("--list-monitors", action="store_true", help="Print the monitors and exit")
+    scr.add_argument("--test-shot", action="store_true",
+                     help="Save one screenshot of the area as test_shot.png and exit")
     parser.add_argument("--verbose", action="store_true", help="Print each saved slide and a status every 30 s")
     parser.add_argument("--no-wait", action="store_true", help="Start capturing right away (don't wait for Enter)")
     args = parser.parse_args()
-    if args.url and not args.app_page:
-        args.url = browser_join_url(args.url)
     if args.sample <= 0:
         parser.error("--sample must be positive")
+    if args.list_monitors or args.test_shot:
+        args.screen = True
+    if args.screen:
+        if args.url or args.selector:
+            parser.error("--screen captures the screen; it takes no meeting link or --selector "
+                         "(join Zoom yourself first)")
+        try:
+            import mss  # noqa: F401
+            import numpy  # noqa: F401
+            import PIL  # noqa: F401
+        except ImportError as e:
+            sys.exit(f"Missing dependency ({e.name}). Run: pip install mss pillow numpy")
+        if args.list_monitors:
+            list_monitors()
+            return
+        out_dir = Path(args.outdir) / args.prefix
+        out_dir.mkdir(parents=True, exist_ok=True)
+        capture_screen(args, out_dir)
+        return
+    if args.url and not args.app_page:
+        args.url = browser_join_url(args.url)
     try:
         import numpy  # noqa: F401
         import PIL  # noqa: F401
